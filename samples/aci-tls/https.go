@@ -24,13 +24,11 @@ func main() {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			//CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA},
-			CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384},
-			//RootCAs:                  pool,
+			CipherSuites:             []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA},
 			PreferServerCipherSuites: true,
 			InsecureSkipVerify:       true,
-			//MaxVersion:               tls.VersionTLS11,
-			MinVersion: tls.VersionTLS12,
+			MinVersion:               tls.VersionTLS11,
+			MaxVersion:               tls.VersionTLS11,
 		},
 		DisableCompression: true,
 		DisableKeepAlives:  true,
@@ -63,5 +61,5 @@ func main() {
 		log.Fatalf("body error: %v", errBody)
 	}
 
-	fmt.Printf("done - body: %v", body)
+	fmt.Printf("done - body: %s\n", string(body))
 }
