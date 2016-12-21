@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/udhos/acigo/aci"
@@ -11,13 +12,13 @@ func main() {
 	a, errNew := aci.New(aci.ClientOptions{Debug: true})
 	if errNew != nil {
 		log.Printf("login new client error: %v", errNew)
-		return
+		os.Exit(1)
 	}
 
 	errLogin := a.Login()
 	if errLogin != nil {
 		log.Printf("login error: %v", errLogin)
-		return
+		os.Exit(2)
 	}
 
 	log.Printf("login ok: refresh=%v", a.RefreshTimeout())
@@ -28,8 +29,10 @@ func main() {
 		errRefresh := a.Refresh()
 		if errRefresh != nil {
 			log.Printf("refresh %d/%d error: %v", i, max, errRefresh)
-			break
+			os.Exit(3)
 		}
 		log.Printf("refresh %d/%d ok", i, max)
 	}
+
+	log.Printf("login done")
 }
