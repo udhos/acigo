@@ -1,16 +1,17 @@
 package aci
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	//"net/url"
-	"bytes"
-	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -23,9 +24,11 @@ type ClientOptions struct {
 }
 
 type Client struct {
-	Opt  ClientOptions
-	host int
-	cli  *http.Client
+	Opt                 ClientOptions
+	host                int
+	cli                 *http.Client
+	loginToken          string
+	loginRefreshTimeout time.Duration
 }
 
 const (
@@ -82,9 +85,58 @@ func (c *Client) Login() error {
 		log.Printf("login: api=%s json=%s", loginApi, loginJson)
 	}
 
-	_, err := c.post(loginApi, "application/json", bytes.NewBufferString(loginJson))
+	body, errPost := c.post(loginApi, "application/json", bytes.NewBufferString(loginJson))
+	if errPost != nil {
+		return errPost
+	}
 
-	return err
+	var reply interface{}
+	errJson := json.Unmarshal(body, &reply)
+	if errJson != nil {
+		return errJson
+	}
+
+	imdata, imdataError := mapGet(reply, "imdata")
+	if imdataError != nil {
+		return fmt.Errorf("login: json imdata error: %s", string(body))
+	}
+
+	first, firstError := sliceGet(imdata, 0)
+	if firstError != nil {
+		return fmt.Errorf("login: imdata first error: %s", string(body))
+	}
+
+	mm, mmMap := first.(map[string]interface{})
+	if !mmMap {
+		return fmt.Errorf("login: imdata slice first member not map: %s", string(body))
+	}
+
+	for k, v := range mm {
+		switch k {
+		case "error":
+			attr := mapSimple(v, "attributes")
+			code := mapString(attr, "code")
+			text := mapString(attr, "text")
+			return fmt.Errorf("login: error: code=%s text=%s", code, text)
+		case "aaaLogin":
+			attr := mapSimple(v, "attributes")
+			token := mapString(attr, "token")
+			refresh := mapString(attr, "refreshTimeoutSeconds")
+			if c.Opt.Debug {
+				log.Printf("login: ok: refresh=%s token=%s", refresh, token)
+			}
+			timeout, timeoutErr := strconv.Atoi(refresh)
+			if timeoutErr != nil {
+				log.Printf("login: bad refresh timeout '%s': %v", refresh, timeoutErr)
+				timeout = 60 // defaults to 60 seconds
+			}
+			c.loginToken = token // save
+			c.loginRefreshTimeout = time.Duration(timeout) * time.Second
+			return nil // ok
+		}
+	}
+
+	return fmt.Errorf("login: could not find aaaLogin response: %s", string(body))
 }
 
 func (c *Client) newHttpClient() {
