@@ -38,7 +38,7 @@ func New(o ClientOptions) (*Client, error) {
 	if len(o.Hosts) < 1 {
 		hosts := os.Getenv(APIC_HOSTS)
 		if hosts == "" {
-			return nil, fmt.Errorf("missing apic hosts: %s=%s", APIC_HOSTS, o.User)
+			return nil, fmt.Errorf("missing apic hosts: %s=%s", APIC_HOSTS, o.Hosts)
 		}
 		o.Hosts = strings.Split(hosts, ",")
 		if len(o.Hosts) < 1 {
@@ -67,6 +67,8 @@ func New(o ClientOptions) (*Client, error) {
 
 	c := &Client{Opt: o}
 
+	c.newHttpClient()
+
 	return c, nil
 }
 
@@ -74,11 +76,40 @@ func (c *Client) Login() error {
 
 	loginApi := "/api/aaaLogin.json"
 
-	loginJson := fmt.Sprintf("{'aaaUser': {'attributes': {'name': %s, 'pwd': %s}}}", c.Opt.User, c.Opt.Pass)
+	loginJson := fmt.Sprintf(`{"aaaUser": {"attributes": {"name": "%s", "pwd": "%s"}}}`, c.Opt.User, c.Opt.Pass)
+
+	if c.Opt.Debug {
+		log.Printf("login: api=%s json=%s", loginApi, loginJson)
+	}
 
 	_, err := c.post(loginApi, "application/json", bytes.NewBufferString(loginJson))
 
 	return err
+}
+
+func (c *Client) newHttpClient() {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			CipherSuites:             []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA},
+			PreferServerCipherSuites: true,
+			InsecureSkipVerify:       true,
+			MaxVersion:               tls.VersionTLS11,
+			MinVersion:               tls.VersionTLS11,
+		},
+		DisableCompression: true,
+		DisableKeepAlives:  true,
+		Dial: (&net.Dialer{
+			Timeout:   10 * time.Second,
+			KeepAlive: 10 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: 10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+	c.cli = &http.Client{
+		Transport: tr,
+		Timeout:   15 * time.Second,
+	}
 }
 
 func (c *Client) post(api string, contentType string, r io.Reader) ([]byte, error) {
@@ -88,35 +119,8 @@ func (c *Client) post(api string, contentType string, r io.Reader) ([]byte, erro
 
 		url := "https://" + c.Opt.Hosts[c.host] + api
 
-		if c.cli == nil {
-
-			if c.Opt.Debug {
-				log.Printf("trying: apic: %s", url)
-			}
-
-			tr := &http.Transport{
-				TLSClientConfig: &tls.Config{
-					CipherSuites:             []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA},
-					PreferServerCipherSuites: true,
-					InsecureSkipVerify:       true,
-					MaxVersion:               tls.VersionTLS11,
-					MinVersion:               tls.VersionTLS11,
-				},
-				DisableCompression: true,
-				DisableKeepAlives:  true,
-				Dial: (&net.Dialer{
-					Timeout:   10 * time.Second,
-					KeepAlive: 10 * time.Second,
-				}).Dial,
-				TLSHandshakeTimeout:   10 * time.Second,
-				ResponseHeaderTimeout: 10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
-			}
-			c.cli = &http.Client{
-				Transport: tr,
-				Timeout:   15 * time.Second,
-			}
-
+		if c.Opt.Debug {
+			log.Printf("trying: apic: %s", url)
 		}
 
 		resp, errPost := c.cli.Post(url, contentType, r)
@@ -124,7 +128,6 @@ func (c *Client) post(api string, contentType string, r io.Reader) ([]byte, erro
 			if c.Opt.Debug {
 				log.Printf("post form error: apic: %s: %v", url, errPost)
 			}
-			c.cli = nil
 			last = errPost
 			continue
 		}
@@ -136,7 +139,6 @@ func (c *Client) post(api string, contentType string, r io.Reader) ([]byte, erro
 			if c.Opt.Debug {
 				log.Printf("body error: apic: %s: %v", url, errBody)
 			}
-			c.cli = nil
 			last = errBody
 			continue
 		}
@@ -150,13 +152,3 @@ func (c *Client) post(api string, contentType string, r io.Reader) ([]byte, erro
 
 	return nil, fmt.Errorf("no more apic hosts to try - last: %v", last)
 }
-
-/*
-func forcePort(host, port string) string {
-	i := strings.LastIndexByte(host, ':')
-	if i < 0 {
-		return host + port
-	}
-	return host
-}
-*/
