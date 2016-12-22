@@ -25,7 +25,7 @@ func main() {
 
 	max := 3
 	for i := 0; i < max; i++ {
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 		errRefresh := a.Refresh()
 		if errRefresh != nil {
 			log.Printf("refresh %d/%d error: %v", i, max, errRefresh)
@@ -35,4 +35,12 @@ func main() {
 	}
 
 	log.Printf("login done")
+
+	errLogout := a.Logout()
+	if errLogout != nil {
+		log.Printf("logout error: %v", errLogout)
+		os.Exit(4)
+	}
+
+	log.Printf("logout done")
 }

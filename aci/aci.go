@@ -18,15 +18,17 @@ import (
 	"time"
 )
 
+// ClientOptions is used to specify options for the Client.
 type ClientOptions struct {
-	Hosts []string
-	User  string
-	Pass  string
-	Debug bool
+	Hosts []string // List of apic hostnames. If unspecified, env var APIC_HOSTS is used.
+	User  string   // Username. If unspecified, env var APIC_USER is used.
+	Pass  string   // Password. If unspecified, env var APIC_PASS is used.
+	Debug bool     // Debug enables verbose debugging messages to console.
 }
 
+// Client is an instance for interacting with ACI using API calls.
 type Client struct {
-	Opt                 ClientOptions
+	Opt                 ClientOptions // Options for the APIC client
 	host                int
 	cli                 *http.Client
 	loginToken          string
@@ -34,45 +36,48 @@ type Client struct {
 }
 
 const (
-	APIC_HOSTS = "APIC_HOSTS"
-	APIC_USER  = "APIC_USER"
-	APIC_PASS  = "APIC_PASS"
+	ApicHosts = "APIC_HOSTS" // Env var. List of apic hostnames. Example: "1.1.1.1" or "1.1.1.1,2.2.2.2,3.3.3.3" or "apic1,4.4.4.4"
+	ApicUser  = "APIC_USER"  // Env var. Username. Example: "joe"
+	ApicPass  = "APIC_PASS"  // Env var. Password. Example: "joesecret"
 )
 
+// New creates a new Client instance for interacting with ACI using API calls.
 func New(o ClientOptions) (*Client, error) {
 	if len(o.Hosts) < 1 {
-		hosts := os.Getenv(APIC_HOSTS)
+		hosts := os.Getenv(ApicHosts)
 		if hosts == "" {
-			return nil, fmt.Errorf("missing apic hosts: %s=%s", APIC_HOSTS, o.Hosts)
+			return nil, fmt.Errorf("missing apic hosts: %s=%s", ApicHosts, o.Hosts)
 		}
 		o.Hosts = strings.Split(hosts, ",")
 		if len(o.Hosts) < 1 {
-			return nil, fmt.Errorf("missing apic hosts: %s=%s", APIC_HOSTS, o.Hosts)
+			return nil, fmt.Errorf("missing apic hosts: %s=%s", ApicHosts, o.Hosts)
 		}
 		for _, h := range o.Hosts {
 			if strings.TrimSpace(h) == "" {
-				return nil, fmt.Errorf("blank apic hostname '%s' in %s=%s", h, APIC_HOSTS, o.Hosts)
+				return nil, fmt.Errorf("blank apic hostname '%s' in %s=%s", h, ApicHosts, o.Hosts)
 			}
 		}
 	}
 
 	if o.User == "" {
-		o.User = os.Getenv(APIC_USER)
+		o.User = os.Getenv(ApicUser)
 		if o.User == "" {
-			return nil, fmt.Errorf("missing apic user: %s=%s", APIC_USER, o.User)
+			return nil, fmt.Errorf("missing apic user: %s=%s", ApicUser, o.User)
 		}
 	}
 
 	if o.Pass == "" {
-		o.Pass = os.Getenv(APIC_PASS)
+		o.Pass = os.Getenv(ApicPass)
 		if o.Pass == "" {
-			return nil, fmt.Errorf("missing apic pass: %s=%s", APIC_PASS, o.Pass)
+			return nil, fmt.Errorf("missing apic pass: %s=%s", ApicPass, o.Pass)
 		}
 	}
 
 	c := &Client{Opt: o}
 
 	c.newHttpClient()
+
+	c.debugf("new client: hosts=%s user=%s pass=%s", c.Opt.Hosts, c.Opt.User, c.Opt.Pass)
 
 	return c, nil
 }
@@ -87,15 +92,39 @@ func (c *Client) logf(fmt string, v ...interface{}) {
 	log.Printf("aci client: "+fmt, v...)
 }
 
+func (c *Client) jsonAaaUser() string {
+	return fmt.Sprintf(`{"aaaUser": {"attributes": {"name": "%s", "pwd": "%s"}}}`, c.Opt.User, c.Opt.Pass)
+}
+
+// Logout close a session to APIC using the API aaaLogout.
+func (c *Client) Logout() error {
+
+	logoutApi := "/api/aaaLogout.json"
+
+	aaaUser := c.jsonAaaUser()
+
+	c.debugf("logout: api=%s json=%s", logoutApi, aaaUser)
+
+	body, errPost := c.postLogin(logoutApi, "application/json", bytes.NewBufferString(aaaUser))
+	if errPost != nil {
+		return errPost
+	}
+
+	c.debugf("logout: reply: %s", string(body))
+
+	return nil
+}
+
+// Login opens a new session into APIC using the API aaaLogin.
 func (c *Client) Login() error {
 
 	loginApi := "/api/aaaLogin.json"
 
-	loginJson := fmt.Sprintf(`{"aaaUser": {"attributes": {"name": "%s", "pwd": "%s"}}}`, c.Opt.User, c.Opt.Pass)
+	aaaUser := c.jsonAaaUser()
 
-	c.debugf("login: api=%s json=%s", loginApi, loginJson)
+	c.debugf("login: api=%s json=%s", loginApi, aaaUser)
 
-	body, errPost := c.postLogin(loginApi, "application/json", bytes.NewBufferString(loginJson))
+	body, errPost := c.postLogin(loginApi, "application/json", bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}
@@ -132,14 +161,11 @@ func (c *Client) Login() error {
 			attr := mapSimple(v, "attributes")
 			token := mapString(attr, "token")
 			refresh := mapString(attr, "refreshTimeoutSeconds")
-			timeout, timeoutErr := strconv.Atoi(refresh)
-			if timeoutErr != nil {
-				c.logf("login: bad refresh timeout '%s': %v", refresh, timeoutErr)
-				timeout = 60 // defaults to 60 seconds
-			}
-			c.loginToken = token                                         // save
-			c.loginRefreshTimeout = time.Duration(timeout) * time.Second // save
-			c.debugf("login: ok: refresh=%v token=%s", c.RefreshTimeout(), token)
+
+			c.refreshUpdate(refresh) // save refresh
+			c.loginToken = token     // save token
+			c.debugf("login: ok: timeout=%v token=%s", c.RefreshTimeout(), token)
+
 			return nil // ok
 		}
 	}
@@ -147,6 +173,16 @@ func (c *Client) Login() error {
 	return fmt.Errorf("login: could not find aaaLogin response: %s", string(body))
 }
 
+func (c *Client) refreshUpdate(refresh string) {
+	timeout, timeoutErr := strconv.Atoi(refresh)
+	if timeoutErr != nil {
+		c.logf("refreshUpdate: bad refresh timeout '%s': %v", refresh, timeoutErr)
+		timeout = 60 // defaults to 60 seconds
+	}
+	c.loginRefreshTimeout = time.Duration(timeout) * time.Second // save
+}
+
+// Refresh resets the session timer on APIC using the API aaaRefresh.
 func (c *Client) Refresh() error {
 
 	refreshApi := "/api/aaaRefresh.json"
@@ -190,7 +226,11 @@ func (c *Client) Refresh() error {
 			attr := mapSimple(v, "attributes")
 			token := mapString(attr, "token")
 			refresh := mapString(attr, "refreshTimeoutSeconds")
-			c.debugf("refresh: ok: refresh=%s token=%s", refresh, token)
+
+			c.refreshUpdate(refresh) // save refresh
+			c.loginToken = token     // save token
+			c.debugf("refresh: ok: timeout=%v token=%s", c.RefreshTimeout(), token)
+
 			return nil // ok
 		}
 	}
@@ -198,6 +238,7 @@ func (c *Client) Refresh() error {
 	return fmt.Errorf("refresh: could not find aaaLogin response: %s", string(body))
 }
 
+// RefreshTimeout gets the session timeout reported by last API call to APIC.
 func (c *Client) RefreshTimeout() time.Duration {
 	return c.loginRefreshTimeout
 }
@@ -238,8 +279,6 @@ func (c *Client) postLogin(api string, contentType string, r io.Reader) ([]byte,
 	for ; c.host < len(c.Opt.Hosts); c.host++ {
 
 		url := c.getURL(api)
-
-		c.debugf("trying: apic: %s", url)
 
 		body, errPost := c.post(url, contentType, r)
 		if errPost != nil {
@@ -293,7 +332,7 @@ func (c *Client) learnCookies(resp *http.Response) error {
 }
 
 func (c *Client) post(url string, contentType string, r io.Reader) ([]byte, error) {
-	c.debugf("post: %s", url)
+	c.debugf("post: apic endpoint: %s", url)
 
 	c.showCookies(url)
 
@@ -313,7 +352,7 @@ func (c *Client) post(url string, contentType string, r io.Reader) ([]byte, erro
 }
 
 func (c *Client) get(url string) ([]byte, error) {
-	c.debugf("get: %s", url)
+	c.debugf("get: apic endpoint: %s", url)
 
 	c.showCookies(url)
 
