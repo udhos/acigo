@@ -79,7 +79,7 @@ func parseJsonError(body []byte) error {
 	return fmt.Errorf("error: code=%s text=%s", code, text)
 }
 
-// TenandDel deletes an existing tenant.
+// TenantDel deletes an existing tenant.
 func (c *Client) TenantDel(name string) error {
 
 	api := "/api/mo/uni.json"
@@ -102,7 +102,7 @@ func (c *Client) TenantDel(name string) error {
 	return parseJsonError(body)
 }
 
-// TenandSubscribe deletes an existing tenant.
+// TenantSubscribe deletes an existing tenant.
 func (c *Client) TenantSubscribe() error {
 
 	api := "/api/class/fvTenant.json?subscription=yes"
