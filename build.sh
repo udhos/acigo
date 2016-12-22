@@ -30,8 +30,9 @@ go tool vet .
 
 msg install
 go install $pkg/aci
-go install $pkg/samples/aci-login
 go install $pkg/samples/aci-tls
+go install $pkg/samples/aci-login
+go install $pkg/samples/aci-tenant
 
 # go get honnef.co/go/simple/cmd/gosimple
 s=$GOPATH/bin/gosimple

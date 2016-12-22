@@ -19,7 +19,7 @@ func mapGet(i interface{}, member string) (interface{}, error) {
 func sliceGet(i interface{}, member int) (interface{}, error) {
 	list, isList := i.([]interface{})
 	if !isList {
-		return nil, fmt.Errorf("json sliceGet: not a map")
+		return nil, fmt.Errorf("json sliceGet: not a slice")
 	}
 	if member < 0 || member >= len(list) {
 		return nil, fmt.Errorf("json sliceGet: member=%d out-of-bounds", member)

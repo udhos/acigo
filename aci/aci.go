@@ -99,13 +99,15 @@ func (c *Client) jsonAaaUser() string {
 // Logout close a session to APIC using the API aaaLogout.
 func (c *Client) Logout() error {
 
-	logoutApi := "/api/aaaLogout.json"
+	api := "/api/aaaLogout.json"
 
 	aaaUser := c.jsonAaaUser()
 
-	c.debugf("logout: api=%s json=%s", logoutApi, aaaUser)
+	url := c.getURL(api)
 
-	body, errPost := c.post(logoutApi, "application/json", bytes.NewBufferString(aaaUser))
+	c.debugf("logout: url=%s json=%s", url, aaaUser)
+
+	body, errPost := c.post(url, "application/json", bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}
@@ -174,9 +176,9 @@ func (c *Client) Login() error {
 // Refresh resets the session timer on APIC using the API aaaRefresh.
 func (c *Client) Refresh() error {
 
-	refreshApi := "/api/aaaRefresh.json"
+	api := "/api/aaaRefresh.json"
 
-	url := c.getURL(refreshApi)
+	url := c.getURL(api)
 
 	body, errGet := c.get(url)
 	if errGet != nil {
@@ -277,6 +279,10 @@ func (c *Client) getURL(api string) string {
 func (c *Client) postScan(api string, contentType string, r io.Reader) ([]byte, error) {
 	var last error
 
+	if isURL(api) {
+		return nil, fmt.Errorf("bad api=%s", api)
+	}
+
 	for ; c.host < len(c.Opt.Hosts); c.host++ {
 
 		url := c.getURL(api)
@@ -307,6 +313,11 @@ func (c *Client) showCookies(urlStr string) {
 	}
 
 	cookies := c.cli.Jar.Cookies(u)
+	if len(cookies) < 1 {
+		c.debugf("no cookies to send url=%s", u)
+		return
+	}
+
 	for _, ck := range cookies {
 		c.debugf("cookie to send: %s", ck.Name)
 	}
@@ -335,6 +346,10 @@ func (c *Client) learnCookies(resp *http.Response) error {
 func (c *Client) post(url string, contentType string, r io.Reader) ([]byte, error) {
 	c.debugf("post: apic endpoint: %s", url)
 
+	if !isURL(url) {
+		return nil, fmt.Errorf("bad URL=%s", url)
+	}
+
 	c.showCookies(url)
 
 	resp, errPost := c.cli.Post(url, contentType, r)
@@ -355,11 +370,48 @@ func (c *Client) post(url string, contentType string, r io.Reader) ([]byte, erro
 func (c *Client) get(url string) ([]byte, error) {
 	c.debugf("get: apic endpoint: %s", url)
 
+	if !isURL(url) {
+		return nil, fmt.Errorf("bad URL=%s", url)
+	}
+
 	c.showCookies(url)
 
 	resp, errPost := c.cli.Get(url)
 	if errPost != nil {
 		return nil, errPost
+	}
+
+	if errLearn := c.learnCookies(resp); errLearn != nil {
+		return nil, errLearn
+	}
+
+	body, errBody := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	return body, errBody
+}
+
+func isURL(url string) bool {
+	return strings.HasPrefix(url, "https://")
+}
+
+func (c *Client) delete(url string) ([]byte, error) {
+	c.debugf("delete: apic endpoint: %s", url)
+
+	if !isURL(url) {
+		return nil, fmt.Errorf("bad URL=%s", url)
+	}
+
+	c.showCookies(url)
+
+	req, errNew := http.NewRequest("DELETE", url, nil)
+	if errNew != nil {
+		return nil, errNew
+	}
+
+	resp, errDel := c.cli.Do(req)
+	if errDel != nil {
+		return nil, errDel
 	}
 
 	if errLearn := c.learnCookies(resp); errLearn != nil {
