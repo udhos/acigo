@@ -101,3 +101,35 @@ func (c *Client) TenantDel(name string) error {
 
 	return parseJsonError(body)
 }
+
+// TenandSubscribe deletes an existing tenant.
+func (c *Client) TenantSubscribe() error {
+
+	api := "/api/class/fvTenant.json?subscription=yes"
+
+	url := c.getURL(api)
+
+	c.debugf("tenant subscribe: url=%s", url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return errGet
+	}
+
+	c.debugf("tenant subscribe: reply: %s", string(body))
+
+	var reply interface{}
+	errJson := json.Unmarshal(body, &reply)
+	if errJson != nil {
+		return errJson
+	}
+
+	sub, subError := mapGet(reply, "subscriptionId")
+	if subError != nil {
+		return fmt.Errorf("tentant subscribe error %v: %s", subError, string(body))
+	}
+
+	c.debugf("subscriptionId=%s", sub)
+
+	return nil
+}

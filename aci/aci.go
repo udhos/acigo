@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"io"
 	"io/ioutil"
 	"log"
@@ -33,6 +34,7 @@ type Client struct {
 	cli                 *http.Client
 	loginToken          string
 	loginRefreshTimeout time.Duration
+	socket              *websocket.Conn
 }
 
 const (
@@ -247,15 +249,18 @@ func (c *Client) RefreshTimeout() time.Duration {
 	return c.loginRefreshTimeout
 }
 
+func tlsConfig() *tls.Config {
+	return &tls.Config{
+		CipherSuites:             []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA},
+		PreferServerCipherSuites: true,
+		InsecureSkipVerify:       true,
+		MaxVersion:               tls.VersionTLS11,
+		MinVersion:               tls.VersionTLS11,
+	}
+}
 func (c *Client) newHttpClient() {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			CipherSuites:             []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA},
-			PreferServerCipherSuites: true,
-			InsecureSkipVerify:       true,
-			MaxVersion:               tls.VersionTLS11,
-			MinVersion:               tls.VersionTLS11,
-		},
+		TLSClientConfig:    tlsConfig(),
 		DisableCompression: true,
 		DisableKeepAlives:  true,
 		Dial: (&net.Dialer{
@@ -274,6 +279,11 @@ func (c *Client) newHttpClient() {
 
 func (c *Client) getURL(api string) string {
 	url := "https://" + c.Opt.Hosts[c.host] + api
+	return url
+}
+
+func (c *Client) getURLws(api string) string {
+	url := "wss://" + c.Opt.Hosts[c.host] + api
 	return url
 }
 

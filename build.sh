@@ -34,6 +34,7 @@ go install $pkg/samples/aci-tls
 go install $pkg/samples/aci-login
 go install $pkg/samples/aci-tenant
 go install $pkg/samples/aci-example
+go install $pkg/samples/aci-websocket
 
 # go get honnef.co/go/simple/cmd/gosimple
 s=$GOPATH/bin/gosimple

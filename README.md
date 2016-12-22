@@ -13,7 +13,11 @@ Usage
 
     go get github.com/udhos/acigo
 
-2\. Import the package in your program
+2\. Grab dependencies
+
+    go get github.com/gorilla/websocket
+
+3\. Import the package in your program
 
     import "github.com/udhos/acigo/aci"
 
