@@ -39,6 +39,8 @@ const (
 	ApicHosts = "APIC_HOSTS" // Env var. List of apic hostnames. Example: "1.1.1.1" or "1.1.1.1,2.2.2.2,3.3.3.3" or "apic1,4.4.4.4"
 	ApicUser  = "APIC_USER"  // Env var. Username. Example: "joe"
 	ApicPass  = "APIC_PASS"  // Env var. Password. Example: "joesecret"
+
+	contentTypeJson = "application/json" // ACI API ignores Content-Type, but we set it rightly anyway
 )
 
 // New creates a new Client instance for interacting with ACI using API calls.
@@ -107,7 +109,7 @@ func (c *Client) Logout() error {
 
 	c.debugf("logout: url=%s json=%s", url, aaaUser)
 
-	body, errPost := c.post(url, "application/json", bytes.NewBufferString(aaaUser))
+	body, errPost := c.post(url, contentTypeJson, bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}
@@ -126,7 +128,7 @@ func (c *Client) Login() error {
 
 	c.debugf("login: api=%s json=%s", loginApi, aaaUser)
 
-	body, errPost := c.postScan(loginApi, "application/json", bytes.NewBufferString(aaaUser))
+	body, errPost := c.postScan(loginApi, contentTypeJson, bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}

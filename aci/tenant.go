@@ -33,7 +33,7 @@ func (c *Client) TenantAdd(name, descr string) error {
 
 	c.debugf("tenant add: url=%s json=%s", url, jsonTenant)
 
-	body, errPost := c.post(url, "application/json", bytes.NewBufferString(jsonTenant))
+	body, errPost := c.post(url, contentTypeJson, bytes.NewBufferString(jsonTenant))
 	if errPost != nil {
 		return errPost
 	}
@@ -92,7 +92,7 @@ func (c *Client) TenantDel(name string) error {
 
 	c.debugf("tenant del: url=%s json=%s", url, jsonTenant)
 
-	body, errPost := c.post(url, "application/json", bytes.NewBufferString(jsonTenant))
+	body, errPost := c.post(url, contentTypeJson, bytes.NewBufferString(jsonTenant))
 	if errPost != nil {
 		return errPost
 	}
