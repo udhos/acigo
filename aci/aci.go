@@ -105,7 +105,7 @@ func (c *Client) Logout() error {
 
 	c.debugf("logout: api=%s json=%s", logoutApi, aaaUser)
 
-	body, errPost := c.postLogin(logoutApi, "application/json", bytes.NewBufferString(aaaUser))
+	body, errPost := c.post(logoutApi, "application/json", bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}
@@ -124,7 +124,7 @@ func (c *Client) Login() error {
 
 	c.debugf("login: api=%s json=%s", loginApi, aaaUser)
 
-	body, errPost := c.postLogin(loginApi, "application/json", bytes.NewBufferString(aaaUser))
+	body, errPost := c.postScan(loginApi, "application/json", bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}
@@ -162,24 +162,13 @@ func (c *Client) Login() error {
 			token := mapString(attr, "token")
 			refresh := mapString(attr, "refreshTimeoutSeconds")
 
-			c.refreshUpdate(refresh) // save refresh
-			c.loginToken = token     // save token
-			c.debugf("login: ok: timeout=%v token=%s", c.RefreshTimeout(), token)
+			c.refresh(token, refresh)
 
 			return nil // ok
 		}
 	}
 
 	return fmt.Errorf("login: could not find aaaLogin response: %s", string(body))
-}
-
-func (c *Client) refreshUpdate(refresh string) {
-	timeout, timeoutErr := strconv.Atoi(refresh)
-	if timeoutErr != nil {
-		c.logf("refreshUpdate: bad refresh timeout '%s': %v", refresh, timeoutErr)
-		timeout = 60 // defaults to 60 seconds
-	}
-	c.loginRefreshTimeout = time.Duration(timeout) * time.Second // save
 }
 
 // Refresh resets the session timer on APIC using the API aaaRefresh.
@@ -227,15 +216,26 @@ func (c *Client) Refresh() error {
 			token := mapString(attr, "token")
 			refresh := mapString(attr, "refreshTimeoutSeconds")
 
-			c.refreshUpdate(refresh) // save refresh
-			c.loginToken = token     // save token
-			c.debugf("refresh: ok: timeout=%v token=%s", c.RefreshTimeout(), token)
+			c.refresh(token, refresh)
 
 			return nil // ok
 		}
 	}
 
 	return fmt.Errorf("refresh: could not find aaaLogin response: %s", string(body))
+}
+
+func (c *Client) refresh(token, refreshTimeout string) {
+	c.loginToken = token // save token
+
+	timeout, timeoutErr := strconv.Atoi(refreshTimeout)
+	if timeoutErr != nil {
+		c.logf("refreshUpdate: bad refresh timeout '%s': %v", refreshTimeout, timeoutErr)
+		timeout = 60 // defaults to 60 seconds
+	}
+	c.loginRefreshTimeout = time.Duration(timeout) * time.Second // save timeout
+
+	c.debugf("refresh: timeout=%v token=%s", c.RefreshTimeout(), token)
 }
 
 // RefreshTimeout gets the session timeout reported by last API call to APIC.
@@ -273,7 +273,8 @@ func (c *Client) getURL(api string) string {
 	return url
 }
 
-func (c *Client) postLogin(api string, contentType string, r io.Reader) ([]byte, error) {
+// postScan scans multiple APIC hosts.
+func (c *Client) postScan(api string, contentType string, r io.Reader) ([]byte, error) {
 	var last error
 
 	for ; c.host < len(c.Opt.Hosts); c.host++ {
@@ -282,7 +283,7 @@ func (c *Client) postLogin(api string, contentType string, r io.Reader) ([]byte,
 
 		body, errPost := c.post(url, contentType, r)
 		if errPost != nil {
-			c.debugf("post error: apic: %s: %v", url, errPost)
+			c.debugf("postScan: error: apic: %s: %v", url, errPost)
 			last = errPost
 			continue
 		}
