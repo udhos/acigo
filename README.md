@@ -59,3 +59,10 @@ Example
     		return
     	}
     }
+
+See Also
+========
+
+[Cisco APIC REST API User Guide](http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/1-x/api/rest/b_APIC_RESTful_API_User_Guide.html)
+
+[APIC Management Information Model Reference](https://developer.cisco.com/media/mim-ref)
