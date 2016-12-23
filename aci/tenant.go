@@ -165,5 +165,4 @@ func (c *Client) TenantSubscriptionRefresh(subscriptionId string) error {
 	c.debugf("TenantSubscriptionRefresh: reply: %s", string(body))
 
 	return parseJsonError(body)
-
 }
