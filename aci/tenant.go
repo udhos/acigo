@@ -103,7 +103,7 @@ func (c *Client) TenantDel(name string) error {
 	return parseJSONError(body)
 }
 
-// TenantSubscribe deletes an existing tenant.
+// TenantSubscribe subscribes to tenant notifications.
 // The subscriptionId is returned.
 func (c *Client) TenantSubscribe() (string, error) {
 

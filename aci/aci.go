@@ -283,14 +283,19 @@ func (c *Client) newHTTPClient() {
 	}
 }
 
+// getURL builds HTTPS URL for API access.
 func (c *Client) getURL(api string) string {
-	url := "https://" + c.Opt.Hosts[c.host] + api
-	return url
+	return makeURL("https", c.Opt.Hosts[c.host], api)
 }
 
+// getURLws builds websocket URL for notifications.
 func (c *Client) getURLws(api string) string {
-	url := "wss://" + c.Opt.Hosts[c.host] + api
-	return url
+	return makeURL("wss", c.Opt.Hosts[c.host], api)
+}
+
+// url builds URL from protocol, host, path.
+func makeURL(proto, host, path string) string {
+	return proto + "://" + host + path
 }
 
 // postScan scans multiple APIC hosts.
