@@ -178,6 +178,7 @@ func (c *Client) Login() error {
 }
 
 // Refresh resets the session timer on APIC using the API aaaRefresh.
+// In order to keep the session active, Refresh() must be called at a period lower than the timeout reported by RefreshTimeout().
 func (c *Client) Refresh() error {
 
 	api := "/api/aaaRefresh.json"
@@ -245,6 +246,7 @@ func (c *Client) refresh(token, refreshTimeout string) {
 }
 
 // RefreshTimeout gets the session timeout reported by last API call to APIC.
+// In order to keep the session active, Refresh() must be called at a period lower than the timeout reported by RefreshTimeout().
 func (c *Client) RefreshTimeout() time.Duration {
 	return c.loginRefreshTimeout
 }

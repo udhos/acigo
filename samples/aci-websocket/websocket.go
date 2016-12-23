@@ -26,7 +26,8 @@ func main() {
 		return
 	}
 
-	if errSub := a.TenantSubscribe(); errSub != nil {
+	subscriptionId, errSub := a.TenantSubscribe()
+	if errSub != nil {
 		fmt.Printf("tenant subscribe error: %v\n", errSub)
 		return
 	}
@@ -50,6 +51,12 @@ func main() {
 	}
 
 	fmt.Printf("websocket message: %v\n", msg)
+
+	errSubRefresh := a.TenantSubscriptionRefresh(subscriptionId)
+	if errSubRefresh != nil {
+		fmt.Printf("tenant subscription refresh error: %v", errSubRefresh)
+		return
+	}
 
 	errLogout := a.Logout()
 	if errLogout != nil {

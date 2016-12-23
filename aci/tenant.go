@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 func jsonTenantAdd(name, descr string) string {
@@ -103,7 +104,8 @@ func (c *Client) TenantDel(name string) error {
 }
 
 // TenantSubscribe deletes an existing tenant.
-func (c *Client) TenantSubscribe() error {
+// The subscriptionId is returned.
+func (c *Client) TenantSubscribe() (string, error) {
 
 	api := "/api/class/fvTenant.json?subscription=yes"
 
@@ -113,7 +115,7 @@ func (c *Client) TenantSubscribe() error {
 
 	body, errGet := c.get(url)
 	if errGet != nil {
-		return errGet
+		return "", errGet
 	}
 
 	c.debugf("tenant subscribe: reply: %s", string(body))
@@ -121,15 +123,47 @@ func (c *Client) TenantSubscribe() error {
 	var reply interface{}
 	errJson := json.Unmarshal(body, &reply)
 	if errJson != nil {
-		return errJson
+		return "", errJson
 	}
 
 	sub, subError := mapGet(reply, "subscriptionId")
 	if subError != nil {
-		return fmt.Errorf("tentant subscribe error %v: %s", subError, string(body))
+		return "", fmt.Errorf("tentant subscribe error %v: %s", subError, string(body))
 	}
 
-	c.debugf("subscriptionId=%s", sub)
+	subscriptionId, isStr := sub.(string)
+	if !isStr {
+		return "", fmt.Errorf("subId not a string %v: %s", sub, string(body))
+	}
 
-	return nil
+	c.debugf("TenantSubscribe: subscriptionId=%s", subscriptionId)
+
+	return subscriptionId, nil
+}
+
+// TenantSubscriptionTimeout gets the subscription timeout.
+// In order to keep the subscription active, TenantSubscriptionRefresh() must be called at a period lower than the timeout reported by TenantSubscriptionTimeout().
+func (c *Client) TenantSubscriptionTimeout() time.Duration {
+	return 60 * time.Second // ACI API docs says this value is fixed
+}
+
+// TenantSubscriptionRefresh refreshes a subscription.
+// In order to keep the subscription active, TenantSubscriptionRefresh() must be called at a period lower than the timeout reported by TenantSubscriptionTimeout().
+func (c *Client) TenantSubscriptionRefresh(subscriptionId string) error {
+
+	api := "/api/subscriptionRefresh.json?id=" + subscriptionId
+
+	url := c.getURL(api)
+
+	c.debugf("TenantSubscriptionRefresh: url=%s", url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return errGet
+	}
+
+	c.debugf("TenantSubscriptionRefresh: reply: %s", string(body))
+
+	return parseJsonError(body)
+
 }
