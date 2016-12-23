@@ -16,7 +16,7 @@ get() {
     msg fetching $i - done
 }
 
-get github.com/udhos/equalfile
+get github.com/gorilla/websocket
 #get honnef.co/go/simple/cmd/gosimple
 
 src=`find . -type f | egrep '\.go$'`
