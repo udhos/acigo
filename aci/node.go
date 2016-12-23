@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Nodes retrieves the list of top system elements (APICs, spines, leaves).
+// NodeList retrieves the list of top level system elements (APICs, spines, leaves).
 func (c *Client) NodeList() ([]map[string]interface{}, error) {
 
 	api := "/api/class/topSystem.json"
