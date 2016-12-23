@@ -2,12 +2,16 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/udhos/acigo/aci"
 )
 
 func main() {
 
-	a, errNew := aci.New(aci.ClientOptions{Debug: true})
+	debug := os.Getenv("DEBUG") != ""
+
+	a, errNew := aci.New(aci.ClientOptions{Debug: debug})
 	if errNew != nil {
 		fmt.Printf("login new client error: %v\n", errNew)
 		return
@@ -21,10 +25,14 @@ func main() {
 		return
 	}
 
+	fmt.Printf("login: ok\n")
+
 	if errSock := a.WebsocketOpen(); errSock != nil {
 		fmt.Printf("websocket error: %v\n", errSock)
 		return
 	}
+
+	fmt.Printf("open notification websocket: ok\n")
 
 	subscriptionId, errSub := a.TenantSubscribe()
 	if errSub != nil {
@@ -32,11 +40,15 @@ func main() {
 		return
 	}
 
+	fmt.Printf("subscribe to tenant notifications: ok\n")
+
 	errAdd := a.TenantAdd("tenant-example", "")
 	if errAdd != nil {
 		fmt.Printf("tenant add error: %v\n", errAdd)
 		return
 	}
+
+	fmt.Printf("create tenant: ok\n")
 
 	errDel := a.TenantDel("tenant-example")
 	if errDel != nil {
@@ -44,13 +56,15 @@ func main() {
 		return
 	}
 
+	fmt.Printf("delete tenant: ok\n")
+
 	var msg interface{}
 	if errRead := a.WebsocketReadJson(&msg); errRead != nil {
-		fmt.Printf("websocket read error: %v\n", errRead)
+		fmt.Printf("ERROR: websocket read: %v\n", errRead)
 		return
 	}
 
-	fmt.Printf("websocket message: %v\n", msg)
+	fmt.Printf("SUCCESS: websocket message: %v\n", msg)
 
 	errSubRefresh := a.TenantSubscriptionRefresh(subscriptionId)
 	if errSubRefresh != nil {
@@ -58,9 +72,13 @@ func main() {
 		return
 	}
 
+	fmt.Printf("refresh subscription: ok\n")
+
 	errLogout := a.Logout()
 	if errLogout != nil {
 		fmt.Printf("logout error: %v\n", errLogout)
 		return
 	}
+
+	fmt.Printf("logout: ok\n")
 }
