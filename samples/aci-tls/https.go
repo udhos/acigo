@@ -47,9 +47,9 @@ func main() {
 
 	url := fmt.Sprintf("https://%s/api/aaaLogin.json", host)
 
-	loginJson := fmt.Sprintf("{'aaaUser': {'attributes': {'name': %s, 'pwd': %s}}}", user, pass)
+	loginJSON := fmt.Sprintf("{'aaaUser': {'attributes': {'name': %s, 'pwd': %s}}}", user, pass)
 
-	resp, errPost := c.Post(url, "application/json", bytes.NewBufferString(loginJson))
+	resp, errPost := c.Post(url, "application/json", bytes.NewBufferString(loginJSON))
 	if errPost != nil {
 		log.Fatalf("post error: %v", errPost)
 	}

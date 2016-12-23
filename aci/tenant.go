@@ -34,22 +34,22 @@ func (c *Client) TenantAdd(name, descr string) error {
 
 	c.debugf("tenant add: url=%s json=%s", url, jsonTenant)
 
-	body, errPost := c.post(url, contentTypeJson, bytes.NewBufferString(jsonTenant))
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(jsonTenant))
 	if errPost != nil {
 		return errPost
 	}
 
 	c.debugf("tenant add: reply: %s", string(body))
 
-	return parseJsonError(body)
+	return parseJSONError(body)
 }
 
-func parseJsonError(body []byte) error {
+func parseJSONError(body []byte) error {
 
 	var reply interface{}
-	errJson := json.Unmarshal(body, &reply)
-	if errJson != nil {
-		return errJson
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return errJSON
 	}
 
 	imdata, imdataError := mapGet(reply, "imdata")
@@ -93,14 +93,14 @@ func (c *Client) TenantDel(name string) error {
 
 	c.debugf("tenant del: url=%s json=%s", url, jsonTenant)
 
-	body, errPost := c.post(url, contentTypeJson, bytes.NewBufferString(jsonTenant))
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(jsonTenant))
 	if errPost != nil {
 		return errPost
 	}
 
 	c.debugf("tenant del: reply: %s", string(body))
 
-	return parseJsonError(body)
+	return parseJSONError(body)
 }
 
 // TenantSubscribe deletes an existing tenant.
@@ -121,9 +121,9 @@ func (c *Client) TenantSubscribe() (string, error) {
 	c.debugf("tenant subscribe: reply: %s", string(body))
 
 	var reply interface{}
-	errJson := json.Unmarshal(body, &reply)
-	if errJson != nil {
-		return "", errJson
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return "", errJSON
 	}
 
 	sub, subError := mapGet(reply, "subscriptionId")
@@ -164,5 +164,5 @@ func (c *Client) TenantSubscriptionRefresh(subscriptionId string) error {
 
 	c.debugf("TenantSubscriptionRefresh: reply: %s", string(body))
 
-	return parseJsonError(body)
+	return parseJSONError(body)
 }

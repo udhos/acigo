@@ -29,8 +29,8 @@ func (c *Client) WebsocketOpen() error {
 	return nil
 }
 
-// WebsocketReadJson reads subscription message from websocket.
-func (c *Client) WebsocketReadJson(v interface{}) error {
+// WebsocketReadJSON reads subscription message from websocket.
+func (c *Client) WebsocketReadJSON(v interface{}) error {
 	if c.socket == nil {
 		return fmt.Errorf("websocket not open")
 	}

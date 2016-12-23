@@ -1,5 +1,5 @@
 /*
-Go package for interacting with Cisco ACI using API calls.
+Package aci is a Go module for interacting with Cisco ACI using API calls.
 
 Example
 

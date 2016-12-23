@@ -38,12 +38,15 @@ type Client struct {
 	socket              *websocket.Conn
 }
 
+// Environment variables used as default parameters.
 const (
 	ApicHosts = "APIC_HOSTS" // Env var. List of apic hostnames. Example: "1.1.1.1" or "1.1.1.1,2.2.2.2,3.3.3.3" or "apic1,4.4.4.4"
 	ApicUser  = "APIC_USER"  // Env var. Username. Example: "joe"
 	ApicPass  = "APIC_PASS"  // Env var. Password. Example: "joesecret"
+)
 
-	contentTypeJson = "application/json" // ACI API ignores Content-Type, but we set it rightly anyway
+const (
+	contentTypeJSON = "application/json" // ACI API ignores Content-Type, but we set it rightly anyway
 )
 
 // New creates a new Client instance for interacting with ACI using API calls.
@@ -80,7 +83,7 @@ func New(o ClientOptions) (*Client, error) {
 
 	c := &Client{Opt: o}
 
-	c.newHttpClient()
+	c.newHTTPClient()
 
 	c.debugf("new client: hosts=%s user=%s pass=%s", c.Opt.Hosts, c.Opt.User, c.Opt.Pass)
 
@@ -112,7 +115,7 @@ func (c *Client) Logout() error {
 
 	c.debugf("logout: url=%s json=%s", url, aaaUser)
 
-	body, errPost := c.post(url, contentTypeJson, bytes.NewBufferString(aaaUser))
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}
@@ -125,21 +128,21 @@ func (c *Client) Logout() error {
 // Login opens a new session into APIC using the API aaaLogin.
 func (c *Client) Login() error {
 
-	loginApi := "/api/aaaLogin.json"
+	api := "/api/aaaLogin.json"
 
 	aaaUser := c.jsonAaaUser()
 
-	c.debugf("login: api=%s json=%s", loginApi, aaaUser)
+	c.debugf("login: api=%s json=%s", api, aaaUser)
 
-	body, errPost := c.postScan(loginApi, contentTypeJson, bytes.NewBufferString(aaaUser))
+	body, errPost := c.postScan(api, contentTypeJSON, bytes.NewBufferString(aaaUser))
 	if errPost != nil {
 		return errPost
 	}
 
 	var reply interface{}
-	errJson := json.Unmarshal(body, &reply)
-	if errJson != nil {
-		return errJson
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return errJSON
 	}
 
 	imdata, imdataError := mapGet(reply, "imdata")
@@ -192,9 +195,9 @@ func (c *Client) Refresh() error {
 	}
 
 	var reply interface{}
-	errJson := json.Unmarshal(body, &reply)
-	if errJson != nil {
-		return errJson
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return errJSON
 	}
 
 	imdata, imdataError := mapGet(reply, "imdata")
@@ -261,7 +264,7 @@ func tlsConfig() *tls.Config {
 		MinVersion:               tls.VersionTLS11,
 	}
 }
-func (c *Client) newHttpClient() {
+func (c *Client) newHTTPClient() {
 	tr := &http.Transport{
 		TLSClientConfig:    tlsConfig(),
 		DisableCompression: true,
@@ -321,9 +324,9 @@ func (c *Client) showCookies(urlStr string) {
 		return
 	}
 
-	u, errUrl := url.Parse(urlStr)
-	if errUrl != nil {
-		c.debugf("showCookies: %s: %v", urlStr, errUrl)
+	u, errURL := url.Parse(urlStr)
+	if errURL != nil {
+		c.debugf("showCookies: %s: %v", urlStr, errURL)
 		return
 	}
 

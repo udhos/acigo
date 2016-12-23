@@ -59,7 +59,7 @@ func main() {
 	fmt.Printf("delete tenant: ok\n")
 
 	var msg interface{}
-	if errRead := a.WebsocketReadJson(&msg); errRead != nil {
+	if errRead := a.WebsocketReadJSON(&msg); errRead != nil {
 		fmt.Printf("ERROR: websocket read: %v\n", errRead)
 		return
 	}

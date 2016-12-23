@@ -22,9 +22,9 @@ func (c *Client) NodeList() ([]map[string]interface{}, error) {
 	c.debugf("NodeList: reply: %s", string(body))
 
 	var reply interface{}
-	errJson := json.Unmarshal(body, &reply)
-	if errJson != nil {
-		return nil, errJson
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return nil, errJSON
 	}
 
 	imdata, errImdata := mapGet(reply, "imdata")

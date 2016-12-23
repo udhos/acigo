@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/bash
 
 pkg=github.com/udhos/acigo
 
@@ -28,34 +28,48 @@ go tool fix $src
 msg vet
 go tool vet .
 
+pushd $GOPATH/src/$pkg >/dev/null
+samples=`echo samples/*`
+popd >/dev/null
+
+#echo samples: $samples
+
 msg install
 go install $pkg/aci
-go install $pkg/samples/aci-tls
-go install $pkg/samples/aci-login
-go install $pkg/samples/aci-tenant
-go install $pkg/samples/aci-example
-go install $pkg/samples/aci-websocket
-go install $pkg/samples/aci-nodes
-
-# go get honnef.co/go/simple/cmd/gosimple
-s=$GOPATH/bin/gosimple
-simple() {
-    msg simple - this is slow, please standby
-    # gosimple cant handle source files from multiple packages
-    $s aci/*.go
-    $s samples/login/*.go
-}
-[ -x "$s" ] && simple
+for i in $samples; do
+    msg install $pkg/$i
+    go install $pkg/$i
+done
 
 # go get github.com/golang/lint/golint
 l=$GOPATH/bin/golint
 lint() {
     msg lint
     # golint cant handle source files from multiple packages
+    pushd $GOPATH/src/$pkg >/dev/null
     $l aci/*.go
-    $l samples/login/*.go
+    for i in $samples; do
+	msg lint $i
+	$l $i/*.go
+    done
+    popd >/dev/null
 }
 [ -x "$l" ] && lint
+
+# go get honnef.co/go/simple/cmd/gosimple
+s=$GOPATH/bin/gosimple
+simple() {
+    msg simple - this is slow, please standby
+    # gosimple cant handle source files from multiple packages
+    pushd $GOPATH/src/$pkg >/dev/null
+    $s aci/*.go
+    for i in $samples; do
+	msg simple $i
+	$s $i/*.go
+    done
+    popd >/dev/null
+}
+[ -x "$s" ] && simple
 
 msg test aci
 go test github.com/udhos/acigo/aci
