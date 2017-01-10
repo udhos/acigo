@@ -8,7 +8,9 @@ import (
 // NodeList retrieves the list of top level system elements (APICs, spines, leaves).
 func (c *Client) NodeList() ([]map[string]interface{}, error) {
 
-	api := "/api/class/topSystem.json"
+	key := "topSystem"
+
+	api := "/api/class/" + key + ".json"
 
 	url := c.getURL(api)
 
@@ -42,7 +44,7 @@ func (c *Client) NodeList() ([]map[string]interface{}, error) {
 	for _, n := range list {
 		node, errNode := mapGet(n, "topSystem")
 		if errNode != nil {
-			c.debugf("NodeList: not a topSystem: %v", n)
+			c.debugf("NodeList: not a %s: %v", key, n)
 			continue
 		}
 		attr, errAttr := mapGet(node, "attributes")

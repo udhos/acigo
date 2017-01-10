@@ -9,6 +9,8 @@ import (
 
 func main() {
 
+	debug := os.Getenv("DEBUG") != ""
+
 	if len(os.Args) < 3 {
 		log.Fatalf("usage: %s add|del tenant [description]", os.Args[0])
 	}
@@ -20,9 +22,30 @@ func main() {
 		descr = os.Args[3]
 	}
 
-	a := login()
+	a := login(debug)
 	defer logout(a)
 
+	// add/del tenants
+
+	execute(a, cmd, name, descr)
+
+	// display existing tenants
+
+	tenants, errList := a.TenantList()
+	if errList != nil {
+		log.Printf("could not list tenants: %v", errList)
+		return
+	}
+
+	for _, t := range tenants {
+		name := t["name"]
+		dn := t["dn"]
+		descr := t["descr"]
+		log.Printf("FOUND tenant: name=%s dn=%s descr=%s\n", name, dn, descr)
+	}
+}
+
+func execute(a *aci.Client, cmd, name, descr string) {
 	switch cmd {
 	case "add":
 		errAdd := a.TenantAdd(name, descr)
@@ -40,12 +63,12 @@ func main() {
 		log.Printf("SUCCESS: del tenant: %s", name)
 	default:
 		log.Printf("unknown command: %s", cmd)
-		return
 	}
 }
 
-func login() *aci.Client {
-	a, errNew := aci.New(aci.ClientOptions{Debug: true})
+func login(debug bool) *aci.Client {
+
+	a, errNew := aci.New(aci.ClientOptions{Debug: debug})
 	if errNew != nil {
 		log.Printf("login new client error: %v", errNew)
 		os.Exit(1)

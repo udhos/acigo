@@ -103,6 +103,64 @@ func (c *Client) TenantDel(name string) error {
 	return parseJSONError(body)
 }
 
+// TenantList retrieves the list of tenants.
+func (c *Client) TenantList() ([]map[string]interface{}, error) {
+
+	key := "fvTenant"
+
+	api := "/api/node/class/" + key + ".json"
+
+	url := c.getURL(api)
+
+	c.debugf("TenantList: url=%s", url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return nil, errGet
+	}
+
+	c.debugf("TenantList: reply: %s", string(body))
+
+	var reply interface{}
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return nil, errJSON
+	}
+
+	imdata, errImdata := mapGet(reply, "imdata")
+	if errImdata != nil {
+		return nil, fmt.Errorf("missing imdata: %v", errImdata)
+	}
+
+	list, isList := imdata.([]interface{})
+	if !isList {
+		return nil, fmt.Errorf("imdata does not hold a list: %s", string(body))
+	}
+
+	result := make([]map[string]interface{}, 0, len(list))
+
+	for _, i := range list {
+		item, errItem := mapGet(i, key)
+		if errItem != nil {
+			c.debugf("NodeList: not a %s: %v", key, i)
+			continue
+		}
+		attr, errAttr := mapGet(item, "attributes")
+		if errAttr != nil {
+			c.debugf("NodeList: missing attributes: %v", item)
+			continue
+		}
+		m, isMap := attr.(map[string]interface{})
+		if !isMap {
+			c.debugf("NodeList: not a map: %v", attr)
+			continue
+		}
+		result = append(result, m)
+	}
+
+	return result, nil
+}
+
 // TenantSubscribe subscribes to tenant notifications.
 // The subscriptionId is returned.
 func (c *Client) TenantSubscribe() (string, error) {

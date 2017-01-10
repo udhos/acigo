@@ -47,6 +47,7 @@ lint() {
     msg lint
     # golint cant handle source files from multiple packages
     pushd $GOPATH/src/$pkg >/dev/null
+    $l yname/*.go
     $l aci/*.go
     for i in $samples; do
 	msg lint $i
@@ -62,6 +63,7 @@ simple() {
     msg simple - this is slow, please standby
     # gosimple cant handle source files from multiple packages
     pushd $GOPATH/src/$pkg >/dev/null
+    $s yname/*.go
     $s aci/*.go
     for i in $samples; do
 	msg simple $i
@@ -73,3 +75,4 @@ simple() {
 
 msg test aci
 go test github.com/udhos/acigo/aci
+go test github.com/udhos/acigo/yname
