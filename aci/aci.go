@@ -264,13 +264,14 @@ func tlsConfig() *tls.Config {
 		MinVersion:               tls.VersionTLS11,
 	}
 }
+
 func (c *Client) newHTTPClient() {
 	tr := &http.Transport{
 		TLSClientConfig:    tlsConfig(),
 		DisableCompression: true,
 		DisableKeepAlives:  true,
 		Dial: (&net.Dialer{
-			Timeout:   10 * time.Second,
+			Timeout:   5 * time.Second,
 			KeepAlive: 10 * time.Second,
 		}).Dial,
 		TLSHandshakeTimeout:   10 * time.Second,

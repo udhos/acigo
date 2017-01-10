@@ -34,9 +34,10 @@ func main() {
 	}
 
 	for _, n := range nodes {
+		name := n["name"]
 		dn := n["dn"]
 		role := n["role"]
-		fmt.Printf("FOUND node: role=%s dn=%s\n", role, dn)
+		fmt.Printf("FOUND node: name=%s role=%s dn=%s\n", name, role, dn)
 	}
 
 	errLogout := a.Logout()
