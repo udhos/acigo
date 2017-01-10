@@ -142,17 +142,17 @@ func (c *Client) TenantList() ([]map[string]interface{}, error) {
 	for _, i := range list {
 		item, errItem := mapGet(i, key)
 		if errItem != nil {
-			c.debugf("NodeList: not a %s: %v", key, i)
+			c.debugf("TenantList: not a %s: %v", key, i)
 			continue
 		}
 		attr, errAttr := mapGet(item, "attributes")
 		if errAttr != nil {
-			c.debugf("NodeList: missing attributes: %v", item)
+			c.debugf("TenantList: missing attributes: %v", item)
 			continue
 		}
 		m, isMap := attr.(map[string]interface{})
 		if !isMap {
-			c.debugf("NodeList: not a map: %v", attr)
+			c.debugf("TenantList: not a map: %v", attr)
 			continue
 		}
 		result = append(result, m)
