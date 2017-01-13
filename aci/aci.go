@@ -104,7 +104,7 @@ func (c *Client) jsonAaaUser() string {
 	return fmt.Sprintf(`{"aaaUser": {"attributes": {"name": "%s", "pwd": "%s"}}}`, c.Opt.User, c.Opt.Pass)
 }
 
-// Logout close a session to APIC using the API aaaLogout.
+// Logout closes a session to APIC using the API aaaLogout.
 func (c *Client) Logout() error {
 
 	api := "/api/aaaLogout.json"
