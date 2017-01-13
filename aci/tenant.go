@@ -121,44 +121,7 @@ func (c *Client) TenantList() ([]map[string]interface{}, error) {
 
 	c.debugf("TenantList: reply: %s", string(body))
 
-	var reply interface{}
-	errJSON := json.Unmarshal(body, &reply)
-	if errJSON != nil {
-		return nil, errJSON
-	}
-
-	imdata, errImdata := mapGet(reply, "imdata")
-	if errImdata != nil {
-		return nil, fmt.Errorf("missing imdata: %v", errImdata)
-	}
-
-	list, isList := imdata.([]interface{})
-	if !isList {
-		return nil, fmt.Errorf("imdata does not hold a list: %s", string(body))
-	}
-
-	result := make([]map[string]interface{}, 0, len(list))
-
-	for _, i := range list {
-		item, errItem := mapGet(i, key)
-		if errItem != nil {
-			c.debugf("TenantList: not a %s: %v", key, i)
-			continue
-		}
-		attr, errAttr := mapGet(item, "attributes")
-		if errAttr != nil {
-			c.debugf("TenantList: missing attributes: %v", item)
-			continue
-		}
-		m, isMap := attr.(map[string]interface{})
-		if !isMap {
-			c.debugf("TenantList: not a map: %v", attr)
-			continue
-		}
-		result = append(result, m)
-	}
-
-	return result, nil
+	return jsonImdataAttributes(c, body, key, "TenantList")
 }
 
 // TenantSubscribe subscribes to tenant notifications.
