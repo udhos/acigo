@@ -2,7 +2,6 @@ package aci
 
 import (
 	"bytes"
-	//"encoding/json"
 	"fmt"
 )
 
