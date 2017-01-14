@@ -11,20 +11,28 @@ func main() {
 
 	debug := os.Getenv("DEBUG") != ""
 
-	if len(os.Args) < 4 {
-		log.Fatalf("usage: %s add|del|list vlanpool mode [description]", os.Args[0])
+	var listCmd bool
+	if len(os.Args) > 1 {
+		listCmd = os.Args[1] == "list"
 	}
 
-	cmd := os.Args[1]
-	name := os.Args[2]
-	mode := os.Args[3]
-	var descr string
-	if len(os.Args) > 4 {
-		descr = os.Args[4]
-	}
+	var cmd, name, mode, descr string
 
-	if mode != "static" && mode != "dynamic" {
-		log.Fatalf("bad mode=%s: expecting 'static' or 'dynamic'", mode)
+	if !listCmd {
+		if len(os.Args) < 4 {
+			log.Fatalf("usage: %s add|del|list vlanpool mode [description]", os.Args[0])
+		}
+
+		cmd = os.Args[1]
+		name = os.Args[2]
+		mode = os.Args[3]
+		if len(os.Args) > 4 {
+			descr = os.Args[4]
+		}
+
+		if mode != "static" && mode != "dynamic" {
+			log.Fatalf("bad mode=%s: expecting 'static' or 'dynamic'", mode)
+		}
 	}
 
 	a := login(debug)
