@@ -48,7 +48,7 @@ func (c *Client) PhysicalDomainDel(name string) error {
 
 	url := c.getURL(api)
 
-	c.debugf("PhysicalDomainAdd: url=%s", url)
+	c.debugf("PhysicalDomainDel: url=%s", url)
 
 	body, errDel := c.delete(url)
 	if errDel != nil {
