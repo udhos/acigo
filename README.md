@@ -60,6 +60,11 @@ Example
     	}
     }
 
+Documentation
+=============
+
+Acigo documentation in GoDoc: https://godoc.org/github.com/udhos/acigo/aci
+
 See Also
 ========
 
