@@ -250,3 +250,79 @@ func (c *Client) BridgeDomainSubnetList(tenant, bd string) ([]map[string]interfa
 
 	return jsonImdataAttributes(c, body, key, me)
 }
+
+// BridgeDomainSubnetGet retrieves specific subnet from a bridge domain.
+func (c *Client) BridgeDomainSubnetGet(tenant, bd, subnet string) ([]map[string]interface{}, error) {
+
+	me := "BridgeDomainSubnetGet"
+
+	key := "fvSubnet"
+
+	dnSN := dnSubnet(tenant, bd, subnet)
+
+	api := "/api/node/mo/uni/" + dnSN + ".json"
+
+	url := c.getURL(api)
+
+	c.debugf("%s: url=%s", me, url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return nil, fmt.Errorf("%s: %v", me, errGet)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return jsonImdataAttributes(c, body, key, me)
+}
+
+// BridgeDomainSubnetScopeSet defines the scope for a bridge domain subnet.
+func (c *Client) BridgeDomainSubnetScopeSet(tenant, bd, subnet, scope string) error {
+
+	me := "BridgeDomainSubnetScopeSet"
+
+	dnSN := dnSubnet(tenant, bd, subnet)
+
+	api := "/api/node/mo/uni/" + dnSN + ".json"
+
+	url := c.getURL(api)
+
+	j := fmt.Sprintf(`{"fvSubnet":{"attributes":{"dn":"uni/%s","scope":"%s"}}}`,
+		dnSN, scope)
+
+	c.debugf("%s: url=%s json=%s", me, url, j)
+
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
+}
+
+// BridgeDomainSubnetGet retrieves the scope from a bridge domain subnet.
+func (c *Client) BridgeDomainSubnetScopeGet(tenant, bd, subnet string) (string, error) {
+
+	me := "BridgeDomainSubnetScopeGet"
+
+	list, errSubnet := c.BridgeDomainSubnetGet(tenant, bd, subnet)
+	if errSubnet != nil {
+		return "", fmt.Errorf("%s: %v", me, errSubnet)
+	}
+
+	if len(list) < 1 {
+		return "", fmt.Errorf("%s: empty list of subnets", me)
+	}
+
+	attrs := list[0]
+	s := attrs["scope"]
+
+	scope, isStr := s.(string)
+	if !isStr {
+		return "", fmt.Errorf("%s: scope is not a string", me)
+	}
+
+	return scope, nil
+}

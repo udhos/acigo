@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 3 {
-		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get|subnet-add|subnet-del args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get|subnet-add|subnet-del|subnet-get|subnet-scope-set|subnet-scope-get args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -59,8 +59,9 @@ func main() {
 			for _, s := range subnets {
 				ip := s["ip"]
 				sDn := s["dn"]
+				scope := s["scope"]
 				sDescr := s["descr"]
-				log.Printf("  bridge domain %s subnet: ip=%s dn=%s descr=%s", bd, ip, sDn, sDescr)
+				log.Printf("  bridge domain %s subnet: ip=%s dn=%s scope=%s descr=%s", bd, ip, sDn, scope, sDescr)
 			}
 		}
 	}
@@ -152,6 +153,46 @@ func execute(a *aci.Client, cmd string, args []string) {
 			return
 		}
 		log.Printf("SUCCESS: subnet-del: tenant=%s bd=%s subnet=%s", tenant, bd, subnet)
+	case "subnet-get":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s subnet-get tenant bridge-domain subnet", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		subnet := args[2]
+		sn, errDel := a.BridgeDomainSubnetGet(tenant, bd, subnet)
+		if errDel != nil {
+			log.Printf("FAILURE: subnet-get error: %v", errDel)
+			return
+		}
+		log.Printf("SUCCESS: subnet-get: tenant=%s bd=%s subnet=%s: %v", tenant, bd, subnet, sn)
+	case "subnet-scope-set":
+		if len(args) < 4 {
+			log.Fatalf("usage: %s subnet-scope-set tenant bridge-domain subnet scope", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		subnet := args[2]
+		scope := args[3]
+		errScope := a.BridgeDomainSubnetScopeSet(tenant, bd, subnet, scope)
+		if errScope != nil {
+			log.Printf("FAILURE: subnet-scope-set error: %v", errScope)
+			return
+		}
+		log.Printf("SUCCESS: subnet-scope-set: tenant=%s bd=%s subnet=%s scope=%s", tenant, bd, subnet, scope)
+	case "subnet-scope-get":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s subnet-scope-get tenant bridge-domain subnet", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		subnet := args[2]
+		scope, errScope := a.BridgeDomainSubnetScopeGet(tenant, bd, subnet)
+		if errScope != nil {
+			log.Printf("FAILURE: subnet-scope-get error: %v", errScope)
+			return
+		}
+		log.Printf("SUCCESS: subnet-scope-get: tenant=%s bd=%s subnet=%s: => scope=%s", tenant, bd, subnet, scope)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}
