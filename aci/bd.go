@@ -120,7 +120,7 @@ func (c *Client) BridgeDomainVrfSet(tenant, bd, vrf string) error {
 	return parseJSONError(body)
 }
 
-// BridgeDomainVrfGet retrieves the VLAN for a bridge domain.
+// BridgeDomainVrfGet retrieves the VRF for a bridge domain.
 func (c *Client) BridgeDomainVrfGet(tenant, bd string) (string, error) {
 
 	me := "BridgeDomainVrfGet"
