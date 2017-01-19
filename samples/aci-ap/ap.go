@@ -11,16 +11,28 @@ func main() {
 
 	debug := os.Getenv("DEBUG") != ""
 
-	if len(os.Args) < 4 {
-		log.Fatalf("usage: %s add|del tenant ap [description]", os.Args[0])
+	if len(os.Args) < 3 {
+		log.Fatalf("usage: %s add|del|list tenant ap [description]", os.Args[0])
 	}
 
 	cmd := os.Args[1]
 	tenant := os.Args[2]
-	name := os.Args[3]
-	var descr string
-	if len(os.Args) > 4 {
-		descr = os.Args[4]
+
+	isList := cmd == "list"
+
+	var name, descr string
+
+	if !isList {
+
+		if len(os.Args) < 4 {
+			log.Fatalf("usage: %s add|del|list tenant ap [description]", os.Args[0])
+		}
+
+		name = os.Args[3]
+		if len(os.Args) > 4 {
+			descr = os.Args[4]
+		}
+
 	}
 
 	a := login(debug)
@@ -62,6 +74,7 @@ func execute(a *aci.Client, cmd, tenant, name, descr string) {
 			return
 		}
 		log.Printf("SUCCESS: del: %s", name)
+	case "list":
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}
