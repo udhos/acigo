@@ -93,3 +93,71 @@ func (c *Client) BridgeDomainList(tenant string) ([]map[string]interface{}, erro
 
 	return jsonImdataAttributes(c, body, key, me)
 }
+
+// BridgeDomainVrfSet defines the VRF for a bridge domain.
+func (c *Client) BridgeDomainVrfSet(tenant, bd, vrf string) error {
+
+	me := "BridgeDomainVrfSet"
+
+	dn := dnBridgeDomain(tenant, bd)
+
+	api := "/api/node/mo/uni/" + dn + "/rsctx.json"
+
+	url := c.getURL(api)
+
+	j := fmt.Sprintf(`{"fvRsCtx":{"attributes":{"tnFvCtxName":"%s"}}}`,
+		vrf)
+
+	c.debugf("%s: url=%s json=%s", me, url, j)
+
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
+}
+
+// BridgeDomainVrfGet retrieves the VLAN for a bridge domain.
+func (c *Client) BridgeDomainVrfGet(tenant, bd string) (string, error) {
+
+	me := "BridgeDomainVrfGet"
+
+	key := "fvRsCtx"
+
+	dn := dnBridgeDomain(tenant, bd)
+
+	api := "/api/node/mo/uni/" + dn + ".json?query-target=children&target-subtree-class=" + key
+
+	url := c.getURL(api)
+
+	c.debugf("%s: url=%s", me, url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return "", fmt.Errorf("%s: %v", me, errGet)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	attrs, errAttr := jsonImdataAttributes(c, body, key, me)
+	if errAttr != nil {
+		return "", fmt.Errorf("%s: %v", me, errAttr)
+	}
+
+	if len(attrs) < 1 {
+		return "", fmt.Errorf("%s: empty list of VRFs", me)
+	}
+
+	attr := attrs[0]
+	v := attr["tnFvCtxName"]
+
+	vrf, isStr := v.(string)
+	if !isStr {
+		return "", fmt.Errorf("%s: VRF is not a string", me)
+	}
+
+	return vrf, nil
+}

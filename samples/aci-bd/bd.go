@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 3 {
-		log.Fatalf("usage: %s add|del|list args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -76,6 +76,31 @@ func execute(a *aci.Client, cmd string, args []string) {
 		}
 		log.Printf("SUCCESS: del: %s %s", tenant, bd)
 	case "list":
+	case "vrf-set":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s vrf-set tenant bridge-domain vrf", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		vrf := args[2]
+		errDel := a.BridgeDomainVrfSet(tenant, bd, vrf)
+		if errDel != nil {
+			log.Printf("FAILURE: vrf-set error: %v", errDel)
+			return
+		}
+		log.Printf("SUCCESS: vrf-set: tenant=%s bd=%s vrf=%s", tenant, bd, vrf)
+	case "vrf-get":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s vrf-get tenant bridge-domain", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		vrf, errDel := a.BridgeDomainVrfGet(tenant, bd)
+		if errDel != nil {
+			log.Printf("FAILURE: vrf-set error: %v", errDel)
+			return
+		}
+		log.Printf("SUCCESS: vrf-get: tenant=%s bd=%s: => vrf=%s", tenant, bd, vrf)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}

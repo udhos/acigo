@@ -94,9 +94,9 @@ func (c *Client) PhysicalDomainVlanPoolGet(name string) (string, error) {
 
 	c.debugf("PhysicalDomainVlanPoolGet: url=%s", url)
 
-	body, errDel := c.get(url)
-	if errDel != nil {
-		return "", errDel
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return "", errGet
 	}
 
 	c.debugf("PhysicalDomainVlanPoolGet: reply: %s", string(body))
