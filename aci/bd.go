@@ -13,6 +13,14 @@ func dnBridgeDomain(tenant, bd string) string {
 	return rnTenant(tenant) + "/" + rnBridgeDomain(bd)
 }
 
+func rnSubnet(subnet string) string {
+	return "subnet-[" + subnet + "]"
+}
+
+func dnSubnet(tenant, bd, subnet string) string {
+	return dnBridgeDomain(tenant, bd) + "/" + rnSubnet(subnet)
+}
+
 // BridgeDomainAdd creates a new bridge domain in a tenant.
 func (c *Client) BridgeDomainAdd(tenant, bd, descr string) error {
 
@@ -160,4 +168,85 @@ func (c *Client) BridgeDomainVrfGet(tenant, bd string) (string, error) {
 	}
 
 	return vrf, nil
+}
+
+// BridgeDomainSubnetAdd creates a new subnet a bridge domain.
+func (c *Client) BridgeDomainSubnetAdd(tenant, bd, subnet, descr string) error {
+
+	me := "BridgeDomainSubnetAdd"
+
+	rnSN := rnSubnet(subnet)
+
+	dnSN := dnSubnet(tenant, bd, subnet)
+
+	api := "/api/node/mo/uni/" + dnSN + ".json"
+
+	url := c.getURL(api)
+
+	j := fmt.Sprintf(`{"fvSubnet":{"attributes":{"dn":"uni/%s","ip":"%s","descr":"%s","rn":"%s","status":"created"}}}`,
+		dnSN, subnet, descr, rnSN)
+
+	c.debugf("%s: url=%s json=%s", me, url, j)
+
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
+}
+
+// BridgeDomainSubnetDel deletes an existing subnet from a bridge domain.
+func (c *Client) BridgeDomainSubnetDel(tenant, bd, subnet string) error {
+
+	me := "BridgeDomainSubnetDel"
+
+	dnBD := dnBridgeDomain(tenant, bd)
+
+	dnSN := dnSubnet(tenant, bd, subnet)
+
+	api := "/api/node/mo/uni/" + dnBD + ".json"
+
+	url := c.getURL(api)
+
+	j := fmt.Sprintf(`{"fvBD":{"attributes":{"dn":"uni/%s","status":"modified"},"children":[{"fvSubnet":{"attributes":{"dn":"uni/%s","status":"deleted"}}}]}}`,
+		dnBD, dnSN)
+
+	c.debugf("%s: url=%s json=%s", me, url, j)
+
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
+}
+
+// BridgeDomainSubnetList retrieves the list of subnets from a bridge domain.
+func (c *Client) BridgeDomainSubnetList(tenant, bd string) ([]map[string]interface{}, error) {
+
+	me := "BridgeDomainSubnetList"
+
+	key := "fvSubnet"
+
+	dnBD := dnBridgeDomain(tenant, bd)
+
+	api := "/api/node/mo/uni/" + dnBD + ".json?query-target=children&target-subtree-class=" + key
+
+	url := c.getURL(api)
+
+	c.debugf("%s: url=%s", me, url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return nil, fmt.Errorf("%s: %v", me, errGet)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return jsonImdataAttributes(c, body, key, me)
 }

@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 3 {
-		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get|subnet-add|subnet-del args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -41,7 +41,28 @@ func main() {
 		dn := t["dn"]
 		mac := t["mac"]
 		descr := t["descr"]
-		log.Printf("found bridge domain: name=%s dn=%s mac=%s descr=%s\n", name, dn, mac, descr)
+		log.Printf("found bridge domain: name=%s dn=%s mac=%s descr=%s", name, dn, mac, descr)
+
+		bd, isStr := name.(string)
+		if !isStr {
+			log.Printf("bridge domain name is not string: %s", name)
+			continue
+		}
+
+		vrf, errVrfGet := a.BridgeDomainVrfGet(tenant, bd)
+		if errVrfGet == nil {
+			log.Printf("  bridge domain %s vrf: %s", bd, vrf)
+		}
+
+		subnets, errSubnets := a.BridgeDomainSubnetList(tenant, bd)
+		if errSubnets == nil {
+			for _, s := range subnets {
+				ip := s["ip"]
+				sDn := s["dn"]
+				sDescr := s["descr"]
+				log.Printf("  bridge domain %s subnet: ip=%s dn=%s descr=%s", bd, ip, sDn, sDescr)
+			}
+		}
 	}
 }
 
@@ -83,9 +104,9 @@ func execute(a *aci.Client, cmd string, args []string) {
 		tenant := args[0]
 		bd := args[1]
 		vrf := args[2]
-		errDel := a.BridgeDomainVrfSet(tenant, bd, vrf)
-		if errDel != nil {
-			log.Printf("FAILURE: vrf-set error: %v", errDel)
+		errAdd := a.BridgeDomainVrfSet(tenant, bd, vrf)
+		if errAdd != nil {
+			log.Printf("FAILURE: vrf-set error: %v", errAdd)
 			return
 		}
 		log.Printf("SUCCESS: vrf-set: tenant=%s bd=%s vrf=%s", tenant, bd, vrf)
@@ -95,12 +116,42 @@ func execute(a *aci.Client, cmd string, args []string) {
 		}
 		tenant := args[0]
 		bd := args[1]
-		vrf, errDel := a.BridgeDomainVrfGet(tenant, bd)
-		if errDel != nil {
-			log.Printf("FAILURE: vrf-set error: %v", errDel)
+		vrf, errGet := a.BridgeDomainVrfGet(tenant, bd)
+		if errGet != nil {
+			log.Printf("FAILURE: vrf-set error: %v", errGet)
 			return
 		}
 		log.Printf("SUCCESS: vrf-get: tenant=%s bd=%s: => vrf=%s", tenant, bd, vrf)
+	case "subnet-add":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s subnet-add tenant bridge-domain subnet [descr]", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		subnet := args[2]
+		var descr string
+		if len(args) > 3 {
+			descr = args[3]
+		}
+		errAdd := a.BridgeDomainSubnetAdd(tenant, bd, subnet, descr)
+		if errAdd != nil {
+			log.Printf("FAILURE: subnet-add error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: subnet-add: tenant=%s bd=%s subnet=%s", tenant, bd, subnet)
+	case "subnet-del":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s subnet-del tenant bridge-domain subnet", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		subnet := args[2]
+		errDel := a.BridgeDomainSubnetDel(tenant, bd, subnet)
+		if errDel != nil {
+			log.Printf("FAILURE: subnet-del error: %v", errDel)
+			return
+		}
+		log.Printf("SUCCESS: subnet-del: tenant=%s bd=%s subnet=%s", tenant, bd, subnet)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}
