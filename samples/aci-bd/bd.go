@@ -51,7 +51,7 @@ func main() {
 
 		vrf, errVrfGet := a.BridgeDomainVrfGet(tenant, bd)
 		if errVrfGet == nil {
-			log.Printf("  bridge domain %s vrf: %s", bd, vrf)
+			log.Printf("  bridge domain %s vrf=[%s]", bd, vrf)
 		}
 
 		subnets, errSubnets := a.BridgeDomainSubnetList(tenant, bd)

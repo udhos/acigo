@@ -167,6 +167,10 @@ func (c *Client) BridgeDomainVrfGet(tenant, bd string) (string, error) {
 		return "", fmt.Errorf("%s: VRF is not a string", me)
 	}
 
+	if vrf == "" {
+		return "", fmt.Errorf("%s: empty VRF name")
+	}
+
 	return vrf, nil
 }
 
