@@ -306,7 +306,7 @@ func (c *Client) BridgeDomainSubnetScopeSet(tenant, bd, subnet, scope string) er
 	return parseJSONError(body)
 }
 
-// BridgeDomainSubnetGet retrieves the scope from a bridge domain subnet.
+// BridgeDomainSubnetScopeGet retrieves the scope from a bridge domain subnet.
 func (c *Client) BridgeDomainSubnetScopeGet(tenant, bd, subnet string) (string, error) {
 
 	me := "BridgeDomainSubnetScopeGet"
