@@ -174,7 +174,7 @@ func (c *Client) BridgeDomainVrfGet(tenant, bd string) (string, error) {
 	return vrf, nil
 }
 
-// BridgeDomainSubnetAdd creates a new subnet a bridge domain.
+// BridgeDomainSubnetAdd creates a new subnet in a bridge domain.
 func (c *Client) BridgeDomainSubnetAdd(tenant, bd, subnet, descr string) error {
 
 	me := "BridgeDomainSubnetAdd"

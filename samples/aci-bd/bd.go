@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 3 {
-		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get|subnet-add|subnet-del|subnet-get|subnet-scope-set|subnet-scope-get args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get|subnet-add|subnet-del|subnet-get|subnet-scope-set|subnet-scope-get|l3out-add|l3out-del args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -64,6 +64,16 @@ func main() {
 				log.Printf("  bridge domain %s subnet: ip=%s dn=%s scope=%s descr=%s", bd, ip, sDn, scope, sDescr)
 			}
 		}
+
+		outs, errOuts := a.BridgeDomainL3ExtOutList(tenant, bd)
+		if errOuts == nil {
+			for _, o := range outs {
+				oName := o["tnL3extOutName"]
+				oDn := o["dn"]
+				log.Printf("  bridge domain %s L3ExtOut: name=%s dn=%s", bd, oName, oDn)
+			}
+		}
+
 	}
 }
 
@@ -193,6 +203,32 @@ func execute(a *aci.Client, cmd string, args []string) {
 			return
 		}
 		log.Printf("SUCCESS: subnet-scope-get: tenant=%s bd=%s subnet=%s: => scope=%s", tenant, bd, subnet, scope)
+	case "l3out-add":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s l3out-add tenant bridge-domain out", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		out := args[2]
+		errAdd := a.BridgeDomainL3ExtOutAdd(tenant, bd, out)
+		if errAdd != nil {
+			log.Printf("FAILURE: l3out-add error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: l3out-add: tenant=%s bd=%s out=%s", tenant, bd, out)
+	case "l3out-del":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s l3out-del tenant bridge-domain out", os.Args[0])
+		}
+		tenant := args[0]
+		bd := args[1]
+		out := args[2]
+		errDel := a.BridgeDomainL3ExtOutDel(tenant, bd, out)
+		if errDel != nil {
+			log.Printf("FAILURE: l3out-del error: %v", errDel)
+			return
+		}
+		log.Printf("SUCCESS: l3out-del: tenant=%s bd=%s out=%s", tenant, bd, out)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}
