@@ -169,3 +169,79 @@ func (c *Client) L3ExtOutVrfGet(tenant, out string) (string, error) {
 
 	return vrf, nil
 }
+
+// L3ExtOutL3ExtDomainSet defines the external routed domain for an external routed network.
+func (c *Client) L3ExtOutL3ExtDomainSet(tenant, out, domain string) error {
+
+	me := "L3ExtOutL3ExtDomainSet"
+
+	dn := dnL3ExtOut(tenant, out)
+
+	api := "/api/node/mo/uni/" + dn + "/rsl3DomAtt.json"
+
+	url := c.getURL(api)
+
+	j := fmt.Sprintf(`{"l3extRsL3DomAtt":{"attributes":{"tDn":"uni/l3dom-%s"}}}`,
+		domain)
+
+	c.debugf("%s: url=%s json=%s", me, url, j)
+
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
+}
+
+// L3ExtOutL3ExtDomainGet retrieves the external routed domain for an external routed network.
+func (c *Client) L3ExtOutL3ExtDomainGet(tenant, out string) (string, error) {
+
+	me := "L3ExtOutL3ExtDomainGet"
+
+	key := "l3extRsL3DomAtt"
+
+	dn := dnL3ExtOut(tenant, out)
+
+	api := "/api/node/mo/uni/" + dn + ".json?query-target=children&target-subtree-class=" + key
+
+	url := c.getURL(api)
+
+	c.debugf("%s: url=%s", me, url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return "", fmt.Errorf("%s: %v", me, errGet)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	attrs, errAttr := jsonImdataAttributes(c, body, key, me)
+	if errAttr != nil {
+		return "", fmt.Errorf("%s: %v", me, errAttr)
+	}
+
+	if len(attrs) < 1 {
+		return "", fmt.Errorf("%s: empty list of domains", me)
+	}
+
+	attr := attrs[0]
+
+	d, found := attr["tDn"]
+	if !found {
+		return "", fmt.Errorf("%s: domain not found", me)
+	}
+
+	dom, isStr := d.(string)
+	if !isStr {
+		return "", fmt.Errorf("%s: domain is not a string", me)
+	}
+
+	if dom == "" {
+		return "", fmt.Errorf("%s: empty domain name", me)
+	}
+
+	return dom, nil
+}

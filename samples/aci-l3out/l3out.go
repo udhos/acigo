@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 3 {
-		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get|dom-set|dom-get args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -52,6 +52,11 @@ func main() {
 		vrf, errVrfGet := a.L3ExtOutVrfGet(tenant, out)
 		if errVrfGet == nil {
 			log.Printf("  external routed network %s vrf=[%s]", out, vrf)
+		}
+
+		dom, errDomGet := a.L3ExtOutL3ExtDomainGet(tenant, out)
+		if errDomGet == nil {
+			log.Printf("  external routed network %s domain=[%s]", out, dom)
 		}
 	}
 }
@@ -112,6 +117,31 @@ func execute(a *aci.Client, cmd string, args []string) {
 			return
 		}
 		log.Printf("SUCCESS: vrf-get: tenant=%s out=%s: => vrf=%s", tenant, out, vrf)
+	case "dom-set":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s vrf-set tenant out domain", os.Args[0])
+		}
+		tenant := args[0]
+		out := args[1]
+		dom := args[2]
+		errAdd := a.L3ExtOutL3ExtDomainSet(tenant, out, dom)
+		if errAdd != nil {
+			log.Printf("FAILURE: dom-set error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: dom-set: tenant=%s out=%s dom=%s", tenant, out, dom)
+	case "dom-get":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s vrf-get tenant out", os.Args[0])
+		}
+		tenant := args[0]
+		out := args[1]
+		dom, errGet := a.L3ExtOutL3ExtDomainGet(tenant, out)
+		if errGet != nil {
+			log.Printf("FAILURE: dom-set error: %v", errGet)
+			return
+		}
+		log.Printf("SUCCESS: dom-get: tenant=%s out=%s: => dom=%s", tenant, out, dom)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}
