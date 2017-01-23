@@ -324,7 +324,10 @@ func (c *Client) BridgeDomainSubnetScopeGet(tenant, bd, subnet string) (string, 
 	}
 
 	attrs := list[0]
-	s := attrs["scope"]
+	s, found := attrs["scope"]
+	if !found {
+		return "", fmt.Errorf("%s: scope not found", me)
+	}
 
 	scope, isStr := s.(string)
 	if !isStr {
