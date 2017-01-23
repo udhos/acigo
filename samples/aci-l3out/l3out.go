@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 3 {
-		log.Fatalf("usage: %s add|del|list args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|vrf-set|vrf-get args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -42,6 +42,17 @@ func main() {
 		descr := t["descr"]
 
 		log.Printf("found external routed network: name=%s dn=%s descr=%s", name, dn, descr)
+
+		out, isStr := name.(string)
+		if !isStr {
+			log.Printf("external routed network name is not string: %s", name)
+			continue
+		}
+
+		vrf, errVrfGet := a.L3ExtOutVrfGet(tenant, out)
+		if errVrfGet == nil {
+			log.Printf("  external routed network %s vrf=[%s]", out, vrf)
+		}
 	}
 }
 
@@ -76,6 +87,31 @@ func execute(a *aci.Client, cmd string, args []string) {
 		}
 		log.Printf("SUCCESS: del: %s %s", tenant, out)
 	case "list":
+	case "vrf-set":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s vrf-set tenant out vrf", os.Args[0])
+		}
+		tenant := args[0]
+		out := args[1]
+		vrf := args[2]
+		errAdd := a.L3ExtOutVrfSet(tenant, out, vrf)
+		if errAdd != nil {
+			log.Printf("FAILURE: vrf-set error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: vrf-set: tenant=%s out=%s vrf=%s", tenant, out, vrf)
+	case "vrf-get":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s vrf-get tenant out", os.Args[0])
+		}
+		tenant := args[0]
+		out := args[1]
+		vrf, errGet := a.L3ExtOutVrfGet(tenant, out)
+		if errGet != nil {
+			log.Printf("FAILURE: vrf-set error: %v", errGet)
+			return
+		}
+		log.Printf("SUCCESS: vrf-get: tenant=%s out=%s: => vrf=%s", tenant, out, vrf)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}

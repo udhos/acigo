@@ -13,7 +13,7 @@ func dnL3ExtOut(tenant, out string) string {
 	return rnTenant(tenant) + "/" + rnOut(out)
 }
 
-// L3ExtOutAdd creates a external routed network in a tenant.
+// L3ExtOutAdd creates a new external routed network in a tenant.
 func (c *Client) L3ExtOutAdd(tenant, out, descr string) error {
 
 	me := "L3ExtOutAdd"
@@ -92,4 +92,80 @@ func (c *Client) L3ExtOutList(tenant string) ([]map[string]interface{}, error) {
 	c.debugf("%s: reply: %s", me, string(body))
 
 	return jsonImdataAttributes(c, body, key, me)
+}
+
+// L3ExtOutVrfSet defines the VRF for an external routed network.
+func (c *Client) L3ExtOutVrfSet(tenant, out, vrf string) error {
+
+	me := "L3ExtOutVrfSet"
+
+	dn := dnL3ExtOut(tenant, out)
+
+	api := "/api/node/mo/uni/" + dn + "/rsectx.json"
+
+	url := c.getURL(api)
+
+	j := fmt.Sprintf(`{"l3extRsEctx":{"attributes":{"tnFvCtxName":"%s"}}}`,
+		vrf)
+
+	c.debugf("%s: url=%s json=%s", me, url, j)
+
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
+}
+
+// L3ExtOutVrfGet retrieves the VRF for an external routed network.
+func (c *Client) L3ExtOutVrfGet(tenant, out string) (string, error) {
+
+	me := "L3ExtOutVrfGet"
+
+	key := "l3extRsEctx"
+
+	dn := dnL3ExtOut(tenant, out)
+
+	api := "/api/node/mo/uni/" + dn + ".json?query-target=children&target-subtree-class=" + key
+
+	url := c.getURL(api)
+
+	c.debugf("%s: url=%s", me, url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return "", fmt.Errorf("%s: %v", me, errGet)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	attrs, errAttr := jsonImdataAttributes(c, body, key, me)
+	if errAttr != nil {
+		return "", fmt.Errorf("%s: %v", me, errAttr)
+	}
+
+	if len(attrs) < 1 {
+		return "", fmt.Errorf("%s: empty list of VRFs", me)
+	}
+
+	attr := attrs[0]
+
+	v, found := attr["tnFvCtxName"]
+	if !found {
+		return "", fmt.Errorf("%s: VRF not found", me)
+	}
+
+	vrf, isStr := v.(string)
+	if !isStr {
+		return "", fmt.Errorf("%s: VRF is not a string", me)
+	}
+
+	if vrf == "" {
+		return "", fmt.Errorf("%s: empty VRF name", me)
+	}
+
+	return vrf, nil
 }

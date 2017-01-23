@@ -160,7 +160,10 @@ func (c *Client) BridgeDomainVrfGet(tenant, bd string) (string, error) {
 	}
 
 	attr := attrs[0]
-	v := attr["tnFvCtxName"]
+	v, found := attr["tnFvCtxName"]
+	if !found {
+		return "", fmt.Errorf("%s: VRF not found", me)
+	}
 
 	vrf, isStr := v.(string)
 	if !isStr {
