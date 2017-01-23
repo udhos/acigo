@@ -111,7 +111,11 @@ func (c *Client) PhysicalDomainVlanPoolGet(name string) (string, error) {
 	}
 
 	attr := attrs[0]
-	pool := attr["tDn"]
+
+	pool, found := attr["tDn"]
+	if !found {
+		return "", fmt.Errorf("vlanpool not found")
+	}
 
 	poolName, isStr := pool.(string)
 	if !isStr {
