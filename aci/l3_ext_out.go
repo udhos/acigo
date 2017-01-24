@@ -178,12 +178,14 @@ func (c *Client) L3ExtOutL3ExtDomainSet(tenant, out, domain string) error {
 
 	dn := dnL3ExtOut(tenant, out)
 
+	rnDom := rnL3Dom(domain)
+
 	api := "/api/node/mo/uni/" + dn + "/rsl3DomAtt.json"
 
 	url := c.getURL(api)
 
-	j := fmt.Sprintf(`{"l3extRsL3DomAtt":{"attributes":{"tDn":"uni/l3dom-%s"}}}`,
-		domain)
+	j := fmt.Sprintf(`{"l3extRsL3DomAtt":{"attributes":{"tDn":"uni/%s"}}}`,
+		rnDom)
 
 	c.debugf("%s: url=%s json=%s", me, url, j)
 
