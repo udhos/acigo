@@ -3,6 +3,7 @@ package aci
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
 func rnOut(out string) string {
@@ -243,5 +244,24 @@ func (c *Client) L3ExtOutL3ExtDomainGet(tenant, out string) (string, error) {
 		return "", fmt.Errorf("%s: empty domain name", me)
 	}
 
-	return dom, nil
+	tail := extractTail(dom)
+
+	suffix := stripPrefix(tail, "l3dom-")
+
+	return suffix, nil
+}
+
+// extractTail: "a/b/c" => "c"
+func extractTail(str string) string {
+	lastSlash := strings.LastIndexByte(str, '/')
+	tail := str[lastSlash+1:]
+	return tail
+}
+
+// stripPrefix: "xxx-abc", "xxx-" => "abc"
+func stripPrefix(s, prefix string) string {
+	if strings.HasPrefix(s, prefix) {
+		return s[len(prefix):]
+	}
+	return s
 }

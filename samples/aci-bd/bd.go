@@ -129,7 +129,7 @@ func execute(a *aci.Client, cmd string, args []string) {
 		bd := args[1]
 		vrf, errGet := a.BridgeDomainVrfGet(tenant, bd)
 		if errGet != nil {
-			log.Printf("FAILURE: vrf-set error: %v", errGet)
+			log.Printf("FAILURE: vrf-get error: %v", errGet)
 			return
 		}
 		log.Printf("SUCCESS: vrf-get: tenant=%s bd=%s: => vrf=%s", tenant, bd, vrf)
