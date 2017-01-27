@@ -30,12 +30,12 @@ type ClientOptions struct {
 
 // Client is an instance for interacting with ACI using API calls.
 type Client struct {
-	Opt                 ClientOptions // Options for the APIC client
-	host                int
-	cli                 *http.Client
-	loginToken          string
-	loginRefreshTimeout time.Duration
-	socket              *websocket.Conn
+	Opt                 ClientOptions   // Options for the APIC client
+	host                int             // Index for current host
+	cli                 *http.Client    // Client context for HTTP
+	loginToken          string          // Save APIC login token
+	loginRefreshTimeout time.Duration   // Save APIC refresh period
+	socket              *websocket.Conn // APIC websocket for receiving notifications
 }
 
 // Environment variables used as default parameters.

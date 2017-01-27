@@ -13,11 +13,19 @@ func jsonAPDel(tenant, name string) string {
 	return jsonAP(tenant, name, "deleted", "")
 }
 
-func jsonAP(tenant, name, action, descr string) string {
-	ap := "ap-" + name
-	dn := "uni/tn-" + tenant + "/" + ap
+func rnAP(ap string) string {
+	return "ap-" + ap
+}
 
-	prefix := fmt.Sprintf(`{"fvAp":{"attributes":{"dn":"%s","name":"%s"`, dn, name)
+func dnAP(tenant, ap string) string {
+	return rnTenant(tenant) + "/" + rnAP(ap)
+}
+
+func jsonAP(tenant, name, action, descr string) string {
+	ap := rnAP(name)
+	dn := dnAP(tenant, name)
+
+	prefix := fmt.Sprintf(`{"fvAp":{"attributes":{"dn":"uni/%s","name":"%s"`, dn, name)
 
 	var mid string
 	if descr != "" {
@@ -30,7 +38,7 @@ func jsonAP(tenant, name, action, descr string) string {
 }
 
 func apiAP(tenant, name string) string {
-	return "/api/node/mo/uni/tn-" + tenant + "/ap-" + name + ".json"
+	return "/api/node/mo/uni/" + dnAP(tenant, name) + ".json"
 }
 
 // ApplicationProfileAdd creates a new application profile in a tenant.
