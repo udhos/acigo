@@ -40,7 +40,7 @@ func (c *Client) ApplicationEPGAdd(tenant, applicationProfile, bridgeDomain, epg
 	return parseJSONError(body)
 }
 
-// ApplicationEPGDel deletes and existing application EPG from an application profile.
+// ApplicationEPGDel deletes an existing application EPG from an application profile.
 func (c *Client) ApplicationEPGDel(tenant, applicationProfile, epg string) error {
 
 	me := "ApplicationEPGDel"
