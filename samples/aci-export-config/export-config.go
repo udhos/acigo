@@ -103,7 +103,7 @@ func execute(a *aci.Client, cmd string, args []string) {
 			log.Printf("FAILURE: run error: %v", errRun)
 			return
 		}
-		log.Printf("SUCCESS: rn: %s", config)
+		log.Printf("SUCCESS: run: %s", config)
 	case "list":
 	default:
 		log.Printf("unknown command: %s", cmd)
