@@ -73,6 +73,22 @@ simple() {
 }
 [ -x "$s" ] && simple
 
+# go get honnef.co/go/tools/cmd/staticcheck
+sc=$GOPATH/bin/staticcheck
+static() {
+    msg staticcheck - this is slow, please standby
+    # staticcheck cant handle source files from multiple packages
+    pushd $GOPATH/src/$pkg >/dev/null
+    $sc yname/*.go
+    $sc aci/*.go
+    for i in $samples; do
+	msg static $i
+	$sc $i/*.go
+    done
+    popd >/dev/null
+}
+[ -x "$sc" ] && static
+
 msg test aci
 go test github.com/udhos/acigo/aci
 go test github.com/udhos/acigo/yname
