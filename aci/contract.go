@@ -25,8 +25,13 @@ func (c *Client) ContractAdd(tenant, contract, scope, descr string) error {
 
 	url := c.getURL(api)
 
-	j := fmt.Sprintf(`{"vzBrCP":{"attributes":{"dn":"uni/%s","name":"%s","scope":"%s","descr":"%s","rn":"%s","status":"created"}}}`,
-		dn, contract, scope, descr, rn)
+	var attrScope string
+	if scope != "" {
+		attrScope = fmt.Sprintf(`,"scope":"%s"`, scope)
+	}
+
+	j := fmt.Sprintf(`{"vzBrCP":{"attributes":{"dn":"uni/%s","name":"%s"%s,"descr":"%s","rn":"%s","status":"created"}}}`,
+		dn, contract, attrScope, descr, rn)
 
 	c.debugf("%s: url=%s json=%s", me, url, j)
 
