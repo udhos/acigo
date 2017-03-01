@@ -35,6 +35,7 @@ type Client struct {
 	cli                 *http.Client    // Client context for HTTP
 	loginToken          string          // Save APIC login token
 	loginRefreshTimeout time.Duration   // Save APIC refresh period
+	loginRefreshLast    time.Time       // Save APIC last refresh
 	socket              *websocket.Conn // APIC websocket for receiving notifications
 }
 
@@ -139,6 +140,10 @@ func (c *Client) Login() error {
 		return errPost
 	}
 
+	// Can't get last refresh before .postScan() because
+	// .postScan() might hit some broken hosts before connecting.
+	refreshLast := time.Now()
+
 	var reply interface{}
 	errJSON := json.Unmarshal(body, &reply)
 	if errJSON != nil {
@@ -170,9 +175,9 @@ func (c *Client) Login() error {
 		case "aaaLogin":
 			attr := mapSimple(v, "attributes")
 			token := mapString(attr, "token")
-			refresh := mapString(attr, "refreshTimeoutSeconds")
+			refreshTimeout := mapString(attr, "refreshTimeoutSeconds")
 
-			c.refresh(token, refresh)
+			c.saveRefresh(token, refreshTimeout, refreshLast)
 
 			return nil // ok
 		}
@@ -188,6 +193,8 @@ func (c *Client) Refresh() error {
 	api := "/api/aaaRefresh.json"
 
 	url := c.getURL(api)
+
+	refreshLast := time.Now()
 
 	body, errGet := c.get(url)
 	if errGet != nil {
@@ -225,9 +232,9 @@ func (c *Client) Refresh() error {
 		case "aaaLogin":
 			attr := mapSimple(v, "attributes")
 			token := mapString(attr, "token")
-			refresh := mapString(attr, "refreshTimeoutSeconds")
+			refreshTimeout := mapString(attr, "refreshTimeoutSeconds")
 
-			c.refresh(token, refresh)
+			c.saveRefresh(token, refreshTimeout, refreshLast)
 
 			return nil // ok
 		}
@@ -236,23 +243,30 @@ func (c *Client) Refresh() error {
 	return fmt.Errorf("refresh: could not find aaaLogin response: %s", string(body))
 }
 
-func (c *Client) refresh(token, refreshTimeout string) {
+func (c *Client) saveRefresh(token, refreshTimeout string, refreshLast time.Time) {
 	c.loginToken = token // save token
 
 	timeout, timeoutErr := strconv.Atoi(refreshTimeout)
 	if timeoutErr != nil {
-		c.logf("refreshUpdate: bad refresh timeout '%s': %v", refreshTimeout, timeoutErr)
+		c.logf("saveRefresh: bad refresh timeout '%s': %v", refreshTimeout, timeoutErr)
 		timeout = 60 // defaults to 60 seconds
 	}
 	c.loginRefreshTimeout = time.Duration(timeout) * time.Second // save timeout
+	c.loginRefreshLast = refreshLast
 
-	c.debugf("refresh: timeout=%v token=%s", c.RefreshTimeout(), token)
+	c.debugf("saveRefresh: token=%s timeout=%v deadline=%s", token, c.RefreshTimeout(), c.RefreshDeadline())
 }
 
 // RefreshTimeout gets the session timeout reported by last API call to APIC.
 // In order to keep the session active, Refresh() must be called at a period lower than the timeout reported by RefreshTimeout().
 func (c *Client) RefreshTimeout() time.Duration {
 	return c.loginRefreshTimeout
+}
+
+// RefreshDeadline gets the deadline for session timeout.
+// In order to keep the session active, Refresh() must be called before that deadline.
+func (c *Client) RefreshDeadline() time.Time {
+	return c.loginRefreshLast.Add(c.loginRefreshTimeout)
 }
 
 func tlsConfig() *tls.Config {
