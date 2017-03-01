@@ -14,7 +14,8 @@ func dnSubject(tenant, contract, subject string) string {
 }
 
 // ContractSubjectAdd creates a new subject.
-func (c *Client) ContractSubjectAdd(tenant, contract, subject, reverseFilterPorts, descr string) error {
+// reverseFilterForts: "true", "false", "" (empty means default)
+func (c *Client) ContractSubjectAdd(tenant, contract, subject, reverseFilterPorts string, applyBothDirections bool, descr string) error {
 
 	me := "ContractSubjectAdd"
 
@@ -25,13 +26,21 @@ func (c *Client) ContractSubjectAdd(tenant, contract, subject, reverseFilterPort
 
 	url := c.getURL(api)
 
+	// reverse filter ports?
 	var attrReverse string
 	if reverseFilterPorts != "" {
 		attrReverse = fmt.Sprintf(`,"revFltPorts":"%s"`, reverseFilterPorts)
 	}
 
-	j := fmt.Sprintf(`{"vzSubj":{"attributes":{"dn":"uni/%s","name":"%s","descr":"%s"%s,"rn":"%s","status":"created"}}}`,
-		dn, subject, descr, attrReverse, rn)
+	// apply both directions?
+	var nonBoth string
+	if !applyBothDirections {
+		nonBoth = fmt.Sprintf(`,"children":[{"vzInTerm":{"attributes":{"dn":"uni/%s/intmnl","status":"created","targetDscp":"64"},"children":[]}},{"vzOutTerm":{"attributes":{"dn":"uni/%s/outtmnl","status":"created","targetDscp":"64"},"children":[]}}]`,
+			dn, dn)
+	}
+
+	j := fmt.Sprintf(`{"vzSubj":{"attributes":{"dn":"uni/%s","name":"%s","descr":"%s"%s,"rn":"%s","status":"created"}%s}}`,
+		dn, subject, descr, attrReverse, rn, nonBoth)
 
 	c.debugf("%s: url=%s json=%s", me, url, j)
 

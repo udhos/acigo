@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/udhos/acigo/aci"
 )
@@ -50,18 +51,24 @@ func main() {
 func execute(a *aci.Client, cmd string, args []string) {
 	switch cmd {
 	case "add":
-		if len(args) < 4 {
-			log.Fatalf("usage: %s add tenant contract subject reverse-filter-ports [descr]", os.Args[0])
+		if len(args) < 5 {
+			log.Fatalf("usage: %s add tenant contract subject reverse-filter-ports apply-both-directions [descr]", os.Args[0])
 		}
 		tenant := args[0]
 		contract := args[1]
 		subject := args[2]
 		reverse := args[3]
+		both := args[4]
 		var descr string
-		if len(args) > 4 {
-			descr = args[4]
+		if len(args) > 5 {
+			descr = args[5]
 		}
-		errAdd := a.ContractSubjectAdd(tenant, contract, subject, reverse, descr)
+		applyBoth, errBool := strconv.ParseBool(both)
+		if errBool != nil {
+			log.Printf("FAILURE: parse bool error: %v: apply-both-directions=%v", errBool, both)
+			return
+		}
+		errAdd := a.ContractSubjectAdd(tenant, contract, subject, reverse, applyBoth, descr)
 		if errAdd != nil {
 			log.Printf("FAILURE: add error: %v", errAdd)
 			return
