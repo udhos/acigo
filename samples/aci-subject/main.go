@@ -44,7 +44,22 @@ func main() {
 		reverseFilterPorts := t["revFltPorts"]
 		descr := t["descr"]
 
-		log.Printf("FOUND subject: name=%s dn=%s reverseFilterPorts=%s descr=%s", name, dn, reverseFilterPorts, descr)
+		subject, isStr := name.(string)
+		if !isStr {
+			log.Printf("subject name not a string: %v", name)
+			continue
+		}
+
+		var applyBoth string
+		both, errBoth := a.SubjectApplyBothDirections(tenant, contract, subject)
+		if errBoth != nil {
+			log.Printf("subject=%s could not query both directions: %v", subject, errBoth)
+			applyBoth = "error"
+		} else {
+			applyBoth = fmt.Sprintf("%v", both)
+		}
+
+		log.Printf("FOUND subject: name=%s dn=%s reverseFilterPorts=%s applyBothDirections=%s descr=%s", name, dn, reverseFilterPorts, applyBoth, descr)
 	}
 }
 

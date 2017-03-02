@@ -44,22 +44,16 @@ func (c *Client) TenantAdd(name, descr string) error {
 	return parseJSONError(body)
 }
 
-func parseJSONError(body []byte) error {
-
-	var reply interface{}
-	errJSON := json.Unmarshal(body, &reply)
-	if errJSON != nil {
-		return errJSON
-	}
+func imdataExtractError(reply interface{}) error {
 
 	imdata, imdataError := mapGet(reply, "imdata")
 	if imdataError != nil {
-		return fmt.Errorf("imdata error: %s", string(body))
+		return fmt.Errorf("imdata error: %v", imdataError)
 	}
 
 	list, isList := imdata.([]interface{})
 	if !isList {
-		return fmt.Errorf("imdata does not hold a list: %s", string(body))
+		return fmt.Errorf("imdata does not hold a list")
 	}
 
 	if len(list) == 0 {
@@ -78,6 +72,17 @@ func parseJSONError(body []byte) error {
 	text := mapString(attr, "text")
 
 	return fmt.Errorf("error: code=%s text=%s", code, text)
+}
+
+func parseJSONError(body []byte) error {
+
+	var reply interface{}
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return errJSON
+	}
+
+	return imdataExtractError(reply)
 }
 
 // TenantDel deletes an existing tenant.

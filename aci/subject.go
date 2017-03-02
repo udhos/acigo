@@ -2,8 +2,50 @@ package aci
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
+
+// SubjectApplyBothDirections reports whether the subject applies its filters to both directions.
+func (c *Client) SubjectApplyBothDirections(tenant, contract, subject string) (bool, error) {
+
+	me := "SubjectApplyBothDirections"
+
+	dnS := dnSubject(tenant, contract, subject)
+
+	api := "/api/node/mo/uni/" + dnS + ".json?query-target=children&target-subtree-class=vzInTerm&target-subtree-class=vzOutTerm"
+
+	url := c.getURL(api)
+
+	c.debugf("%s: url=%s", me, url)
+
+	body, errGet := c.get(url)
+	if errGet != nil {
+		return false, fmt.Errorf("%s: %v", me, errGet)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	var reply interface{}
+	errJSON := json.Unmarshal(body, &reply)
+	if errJSON != nil {
+		return false, errJSON
+	}
+
+	count, errCount := mapGet(reply, "totalCount")
+	if errCount != nil {
+		return false, fmt.Errorf("%s: totalCount error: %s", me, string(body))
+	}
+
+	errJson := imdataExtractError(reply)
+	if errJson != nil {
+		return false, errJson
+	}
+
+	both := count != "1" && count != "2"
+
+	return both, nil
+}
 
 // SubjectFilterBothAdd attaches a filter to subject.
 // This type of filter is applied to both directions.
