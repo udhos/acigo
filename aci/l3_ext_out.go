@@ -247,7 +247,6 @@ func (c *Client) L3ExtOutL3ExtDomainGet(tenant, out string) (string, error) {
 	}
 
 	tail := extractTail(dom)
-
 	suffix := stripPrefix(tail, "l3dom-")
 
 	return suffix, nil
