@@ -47,7 +47,7 @@ func main() {
 
 		cred, errCred := a.VmmDomainVMWareControllerCredentialsGet(domain, controller)
 		if errCred != nil {
-			log.Printf("could not get credentials for controller=%s: %v", name, errCred)
+			log.Printf("could not get credentials for controller=%s: %v", controller, errCred)
 		}
 
 		log.Printf("FOUND VMM Domain VMWare controller controller=%s dn=%s credentials=%s hostname=%s datacenter=%s", name, dn, cred, hostname, datacenter)

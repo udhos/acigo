@@ -3,6 +3,7 @@ package aci
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
 func jsonVlanPoolAdd(name, mode, descr string) string {
@@ -26,6 +27,23 @@ func jsonVlanPoolDel(name, mode string) string {
 // get vlan pool resource name
 func nameVP(name, mode string) string {
 	return fmt.Sprintf("vlanns-[%s]-%s", name, mode)
+}
+
+// vlanpoolSplit: "vlanns-[a]-b" => "a","b"
+func vlanpoolSplit(vlanpool string) (string, string) {
+	// vlanpool: "vlanns-[a]-b"
+	suffix := stripPrefix(vlanpool, "vlanns-")
+	// suffix: "[a]-b"
+	if len(suffix) < 5 {
+		return "", "" // ugh
+	}
+	lastDash := strings.LastIndexByte(suffix, '-')
+	if lastDash < 3 {
+		return "", "" // ugh
+	}
+	pool := suffix[1 : lastDash-1]
+	mode := suffix[lastDash+1:]
+	return pool, mode
 }
 
 // VlanPoolAdd creates a new VLAN pool.

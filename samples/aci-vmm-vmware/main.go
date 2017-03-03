@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 2 {
-		log.Fatalf("usage: %s add|del|list args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|vlan-set args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -35,7 +35,18 @@ func main() {
 	for _, t := range list {
 		name := t["name"]
 		dn := t["dn"]
-		log.Printf("FOUND VMM Domain VMWare name=%s dn=%s", name, dn)
+
+		dom, isStr := name.(string)
+		if !isStr {
+			log.Printf("domain is not a string: %v", name)
+		}
+
+		pool, mode, errVlan := a.VmmDomainVMWareVlanPoolGet(dom)
+		if errVlan != nil {
+			log.Printf("could not get vlan pool for domain=%s: %v", dom, errVlan)
+		}
+
+		log.Printf("FOUND VMM Domain VMWare name=%s dn=%s vlanpool=%s vlanpoolMode=%s", name, dn, pool, mode)
 	}
 }
 
@@ -64,6 +75,19 @@ func execute(a *aci.Client, cmd string, args []string) {
 		}
 		log.Printf("SUCCESS: del: %s", dom)
 	case "list":
+	case "vlan-set":
+		if len(args) < 3 {
+			log.Fatalf("usage: %s vlan-set domain vlanpool vlanpool-mode", os.Args[0])
+		}
+		domain := args[0]
+		vlanpool := args[1]
+		mode := args[2]
+		errAdd := a.VmmDomainVMWareVlanPoolSet(domain, vlanpool, mode)
+		if errAdd != nil {
+			log.Printf("FAILURE: vlan-set error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: vlan-set: %s %s %s", domain, vlanpool, mode)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}
