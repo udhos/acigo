@@ -34,16 +34,29 @@ func vlanpoolSplit(vlanpool string) (string, string) {
 	// vlanpool: "vlanns-[a]-b"
 	suffix := stripPrefix(vlanpool, "vlanns-")
 	// suffix: "[a]-b"
-	if len(suffix) < 5 {
-		return "", "" // ugh
-	}
 	lastDash := strings.LastIndexByte(suffix, '-')
-	if lastDash < 3 {
-		return "", "" // ugh
+	if lastDash < 0 {
+		return removeBrackets(suffix), "" // ugh
 	}
-	pool := suffix[1 : lastDash-1]
+	pool := removeBrackets(suffix[:lastDash])
 	mode := suffix[lastDash+1:]
 	return pool, mode
+}
+
+// "[a]" => "a"
+func removeBrackets(pool string) string {
+	if len(pool) < 1 {
+		return ""
+	}
+	i := 0
+	if i < len(pool) && pool[i] == '[' {
+		i++
+	}
+	j := len(pool) - 1
+	if pool[j] != ']' {
+		j++
+	}
+	return pool[i:j]
 }
 
 // VlanPoolAdd creates a new VLAN pool.
