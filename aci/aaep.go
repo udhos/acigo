@@ -9,7 +9,7 @@ func rnAEP(aep string) string {
 	return "attentp-" + aep
 }
 
-// AttachableAccessEntityProfileAdd creates a VMWare VMM Domain.
+// AttachableAccessEntityProfileAdd creates an AAEP.
 func (c *Client) AttachableAccessEntityProfileAdd(aep, descr string) error {
 
 	me := "AttachableAccessEntityProfileAdd"

@@ -93,10 +93,6 @@ func (c *Client) VmmDomainVMWareVlanPoolSet(domain, vlanpool, vlanpoolMode strin
 
 	url := c.getURL(api)
 
-	/*
-		j := fmt.Sprintf(`{"vmmDomP":{"attributes":{"dn":"uni/vmmp-VMware/%s","name":"%s","rn":"%s","status":"modified"},"children":[{"infraRsVlanNs":{"attributes":{"tDn":"uni/infra/%s","status":"modified"},"children":[]}},{"vmmVSwitchPolicyCont":{"attributes":{"dn":"uni/vmmp-VMware/%s/vswitchpolcont","status":"created,modified"}}}]}}`,
-			rnD, domain, rnD, rn, rnD)
-	*/
 	j := fmt.Sprintf(`{"vmmDomP":{"attributes":{"dn":"uni/vmmp-VMware/%s","name":"%s","rn":"%s","status":"modified"},"children":[{"infraRsVlanNs":{"attributes":{"tDn":"uni/infra/%s","status":"modified"}}}]}}`,
 		rnD, domain, rnD, rn)
 
