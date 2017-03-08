@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// AttachableAccessEntityProfileVmmDomainVMWareAdd attaches a VMM VMWare Domain to the AAEP.
+// AttachableAccessEntityProfileDomainVmmVMWareAdd attaches a VMM VMWare Domain to the AAEP.
 func (c *Client) AttachableAccessEntityProfileDomainVmmVMWareAdd(aep, domainVMWare string) error {
 
 	me := "AttachableAccessEntityProfileDomainVmmVMWareAdd"

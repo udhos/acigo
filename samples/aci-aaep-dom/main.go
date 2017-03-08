@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 2 {
-		log.Fatalf("usage: %s vmware-add|vmware-del|list args", os.Args[0])
+		log.Fatalf("usage: %s vmware-add|vmware-del|l3-add|l3-del|l2-add|l2-del|list args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -76,6 +76,54 @@ func execute(a *aci.Client, cmd string, args []string) {
 		aaep := args[0]
 		dom := args[1]
 		errDel := a.AttachableAccessEntityProfileDomainVmmVMWareDel(aaep, dom)
+		if errDel != nil {
+			log.Printf("FAILURE: del error: %v", errDel)
+			return
+		}
+		log.Printf("SUCCESS: del: %s %s", aaep, dom)
+	case "l3-add":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s l3-add aaep dom-vmware", os.Args[0])
+		}
+		aaep := args[0]
+		dom := args[1]
+		errAdd := a.AttachableAccessEntityProfileDomainL3Add(aaep, dom)
+		if errAdd != nil {
+			log.Printf("FAILURE: add error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: add: %s %s", aaep, dom)
+	case "l3-del":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s l3-del aaep dom-vmware", os.Args[0])
+		}
+		aaep := args[0]
+		dom := args[1]
+		errDel := a.AttachableAccessEntityProfileDomainL3Del(aaep, dom)
+		if errDel != nil {
+			log.Printf("FAILURE: del error: %v", errDel)
+			return
+		}
+		log.Printf("SUCCESS: del: %s %s", aaep, dom)
+	case "l2-add":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s l2-add aaep dom-vmware", os.Args[0])
+		}
+		aaep := args[0]
+		dom := args[1]
+		errAdd := a.AttachableAccessEntityProfileDomainL2Add(aaep, dom)
+		if errAdd != nil {
+			log.Printf("FAILURE: add error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: add: %s %s", aaep, dom)
+	case "l2-del":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s l2-del aaep dom-vmware", os.Args[0])
+		}
+		aaep := args[0]
+		dom := args[1]
+		errDel := a.AttachableAccessEntityProfileDomainL2Del(aaep, dom)
 		if errDel != nil {
 			log.Printf("FAILURE: del error: %v", errDel)
 			return
