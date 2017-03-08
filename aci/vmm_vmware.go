@@ -9,6 +9,10 @@ func rnVmmDomain(domain string) string {
 	return "dom-" + domain
 }
 
+func rnVmmDomainVMWare(domain string) string {
+	return "vmmp-VMware" + "/" + rnVmmDomain(domain)
+}
+
 // VmmDomainVMWareAdd creates a VMWare VMM Domain.
 func (c *Client) VmmDomainVMWareAdd(domain string) error {
 
