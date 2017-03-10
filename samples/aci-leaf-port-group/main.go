@@ -13,7 +13,7 @@ func main() {
 	debug := os.Getenv("DEBUG") != ""
 
 	if len(os.Args) < 2 {
-		log.Fatalf("usage: %s add|del|list args", os.Args[0])
+		log.Fatalf("usage: %s add|del|list|aaep-set args", os.Args[0])
 	}
 
 	a, errLogin := login(debug)
@@ -38,6 +38,18 @@ func main() {
 		descr := t["descr"]
 
 		log.Printf("FOUND group=%s dn=%s descr=%s", name, dn, descr)
+
+		group, isStr := name.(string)
+		if !isStr {
+			log.Printf("group name is not a string: %v", name)
+		}
+
+		aaep, errEntity := a.LeafInterfacePolicyGroupEntityGet(group)
+		if errEntity != nil {
+			log.Printf("could not get AAEP: %v", errEntity)
+		}
+
+		log.Printf("  group=%s aaep=%s", group, aaep)
 	}
 }
 
@@ -70,6 +82,18 @@ func execute(a *aci.Client, cmd string, args []string) {
 		}
 		log.Printf("SUCCESS: del: %s", group)
 	case "list":
+	case "aaep-set":
+		if len(args) < 2 {
+			log.Fatalf("usage: %s aaep-set group aaep", os.Args[0])
+		}
+		group := args[0]
+		aaep := args[1]
+		errAdd := a.LeafInterfacePolicyGroupEntitySet(group, aaep)
+		if errAdd != nil {
+			log.Printf("FAILURE: add error: %v", errAdd)
+			return
+		}
+		log.Printf("SUCCESS: add: %s %s", group, aaep)
 	default:
 		log.Printf("unknown command: %s", cmd)
 	}
