@@ -16,6 +16,7 @@ func TestVlanpool1(t *testing.T) {
 	vlanspoolSplitTest(t, "vlanns-]-b", "", "b")
 	vlanspoolSplitTest(t, "vlanns-a-b", "a", "b")
 	vlanspoolSplitTest(t, "vlanns--", "", "")
+	vlanspoolSplitTest(t, "vlanns-[a-b]-c-d", "a-b", "c-d")
 }
 
 func vlanspoolSplitTest(t *testing.T, input, wantPool, wantMode string) {

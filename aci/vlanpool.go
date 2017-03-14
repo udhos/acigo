@@ -29,17 +29,31 @@ func nameVP(name, mode string) string {
 	return fmt.Sprintf("vlanns-[%s]-%s", name, mode)
 }
 
-// vlanpoolSplit: "vlanns-[a]-b" => "a","b"
+// vlanpoolSplit: "vlanns-[a-b]-c-d" => "a-b","c-d"
 func vlanpoolSplit(vlanpool string) (string, string) {
-	// vlanpool: "vlanns-[a]-b"
+	// vlanpool: "vlanns-[a-b]-c-d"
 	suffix := stripPrefix(vlanpool, "vlanns-")
-	// suffix: "[a]-b"
-	lastDash := strings.LastIndexByte(suffix, '-')
-	if lastDash < 0 {
+	// suffix: "[a-b]-c-d"
+	sepDash := -1 // sep dash not found
+	bracketClose := strings.IndexByte(suffix, ']')
+	if bracketClose >= 0 {
+		d := bracketClose + 1
+		if d < len(suffix) {
+			if suffix[d] == '-' {
+				sepDash = d // sep dash found
+			}
+		}
+	}
+	if sepDash < 0 {
+		// sep dash not found
+		sepDash = strings.LastIndexByte(suffix, '-')
+	}
+	if sepDash < 0 {
+		// sep dash not found
 		return removeBrackets(suffix), "" // ugh
 	}
-	pool := removeBrackets(suffix[:lastDash])
-	mode := suffix[lastDash+1:]
+	pool := removeBrackets(suffix[:sepDash])
+	mode := suffix[sepDash+1:]
 	return pool, mode
 }
 
