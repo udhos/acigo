@@ -15,6 +15,10 @@ func dnSubject(tenant, contract, subject string) string {
 
 // ContractSubjectAdd creates a new subject.
 // reverseFilterForts: "true", "false", "" (empty means default)
+// reverseFilterForts means the ACI will automatically create a rule with opposite ports to allow the return traffic. For example, if you have a filter allowing traffic from src=X to dst=80, by enabling reverseFilterForts an implicit rule will be added to allow traffic from src=80 to dst=X.
+// applyBothDirections means the subject will apply its filters to both directions.
+// If applyBothDirections is enabled, use these functions to manage subject filters: SubjectFilterBothAdd(), SubjectFilterBothDel(), SubjectFilterBothList().
+// If applyBothDirections is disabled, use these functions to manage subject filters: SubjectFilterInputAdd(), SubjectFilterInputAddDel(), SubjectFilterInputAdd(), SubjectFilterOutputAdd(), SubjectFilterOutputDel(), SubjectFilterOutputList()
 func (c *Client) ContractSubjectAdd(tenant, contract, subject, reverseFilterPorts string, applyBothDirections bool, descr string) error {
 
 	me := "ContractSubjectAdd"

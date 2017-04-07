@@ -37,9 +37,9 @@ func (c *Client) SubjectApplyBothDirections(tenant, contract, subject string) (b
 		return false, fmt.Errorf("%s: totalCount error: %s", me, string(body))
 	}
 
-	errJson := imdataExtractError(reply)
-	if errJson != nil {
-		return false, errJson
+	err := imdataExtractError(reply)
+	if err != nil {
+		return false, err
 	}
 
 	both := count != "1" && count != "2"
@@ -101,7 +101,7 @@ func (c *Client) SubjectFilterBothDel(tenant, contract, subject, filter string) 
 	return parseJSONError(body)
 }
 
-// SubjectFilterBothDel retrieves the list of filters attached to subject.
+// SubjectFilterBothList retrieves the list of filters attached to subject.
 // These filters are applied to both directions.
 func (c *Client) SubjectFilterBothList(tenant, contract, subject string) ([]map[string]interface{}, error) {
 
@@ -179,7 +179,7 @@ func (c *Client) SubjectFilterInputDel(tenant, contract, subject, filter string)
 	return parseJSONError(body)
 }
 
-// SubjectFilterInputDel retrieves the list of input filters attached to subject.
+// SubjectFilterInputList retrieves the list of input filters attached to subject.
 func (c *Client) SubjectFilterInputList(tenant, contract, subject string) ([]map[string]interface{}, error) {
 
 	me := "SubjectFilterInputList"
@@ -256,7 +256,7 @@ func (c *Client) SubjectFilterOutputDel(tenant, contract, subject, filter string
 	return parseJSONError(body)
 }
 
-// SubjectFilterOutputDel retrieves the list of output filters attached to subject.
+// SubjectFilterOutputList retrieves the list of output filters attached to subject.
 func (c *Client) SubjectFilterOutputList(tenant, contract, subject string) ([]map[string]interface{}, error) {
 
 	me := "SubjectFilterOutputList"
