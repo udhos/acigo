@@ -28,7 +28,13 @@ go tool fix $src
 msg vet
 go tool vet .
 
-pushd $GOPATH/src/$pkg >/dev/null
+if [ -z "$GOPATH" ]; then
+	src=$HOME/go/src/$pkg
+else
+	src=$GOPATH/src/$pkg
+fi
+
+pushd $src >/dev/null
 samples=`echo samples/*`
 popd >/dev/null
 
