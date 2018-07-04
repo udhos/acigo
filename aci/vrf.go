@@ -96,3 +96,25 @@ func (c *Client) VrfList(tenant string) ([]map[string]interface{}, error) {
 
 	return jsonImdataAttributes(c, body, key, me)
 }
+
+// VrfSetEnforcedMode sets the VRF enforced mode flag
+func (c *Client) VrfSetEnforcedMode(tenant, vrf string, enforced bool) error {
+	me := "VrfSetEnforced"
+	dn := dnVrf(tenant, vrf)
+	var enforcedString = "unenforced"
+	if enforced {
+		enforcedString = "enforced"
+	}
+	api := "/api/node/mo/uni/" + dn + ".json"
+	j := fmt.Sprintf(`{"fvCtx":{"attributes":{"dn":"uni/%s", "pcEnfPref":"%s"}}}`, dn, enforcedString)
+	url := c.getURL(api)
+	c.debugf("%s: url=%s json=%s", me, url, j)
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
+}

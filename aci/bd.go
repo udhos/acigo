@@ -3,6 +3,7 @@ package aci
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 )
 
 func rnBridgeDomain(bd string) string {
@@ -335,4 +336,22 @@ func (c *Client) BridgeDomainSubnetScopeGet(tenant, bd, subnet string) (string, 
 	}
 
 	return scope, nil
+}
+
+// BridgeDomainSetUnicastRouting sets or clears the "Enable unicast routing" flag
+func (c *Client) BridgeDomainSetUnicastRouting(tenant, bd string, enabled bool) error {
+	me := "BdSetUnicastRouting"
+	dn := dnBridgeDomain(tenant, bd)
+	api := "/api/node/mo/uni/" + dn + ".json"
+	j := fmt.Sprintf(`{"fvBD":{"attributes":{"dn":"uni/%s", "unicastRoute":"%s"}}}`, dn, strconv.FormatBool(enabled))
+	url := c.getURL(api)
+	c.debugf("%s: url=%s json=%s", me, url, j)
+	body, errPost := c.post(url, contentTypeJSON, bytes.NewBufferString(j))
+	if errPost != nil {
+		return fmt.Errorf("%s: %v", me, errPost)
+	}
+
+	c.debugf("%s: reply: %s", me, string(body))
+
+	return parseJSONError(body)
 }
