@@ -26,7 +26,7 @@ gofmt -s -w $src
 msg fix
 go tool fix $src
 msg vet
-go tool vet .
+go vet .
 
 if [ -z "$GOPATH" ]; then
 	src=$HOME/go/src/$pkg

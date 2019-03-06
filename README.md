@@ -1,28 +1,34 @@
 [![GoDoc](https://godoc.org/github.com/udhos/acigo/aci?status.svg)](http://godoc.org/github.com/udhos/acigo/aci)
 [![Go Report Card](https://goreportcard.com/badge/github.com/udhos/acigo)](https://goreportcard.com/report/github.com/udhos/acigo)
+[![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/udhos/acigo/blob/master/LICENSE)
 
-About Acigo
-===========
+# About Acigo
 
 Acigo is a Go package for interacting with Cisco ACI using API calls.
 
-Usage
-=====
+# Install
 
-1\. Grab the source
-
-    go get github.com/udhos/acigo
-
-2\. Grab dependencies
+## Without Modules - Before Go 1.11
 
     go get github.com/gorilla/websocket
+    go get github.com/udhos/acigo
+    go install github.com/udhos/acigo/aci
 
-3\. Import the package in your program
+## With Modules - Since Go 1.11
+
+    git clone https://github.com/udhos/acigo
+    cd acigo
+    go install ./aci
+
+# Usage
+
+Import the package in your program:
 
     import "github.com/udhos/acigo/aci"
 
-Example
-=======
+See godoc: http://godoc.org/github.com/udhos/acigo/aci
+
+# Example
 
     package main
     
@@ -60,13 +66,11 @@ Example
     	}
     }
 
-Documentation
-=============
+# Documentation
 
 Acigo documentation in GoDoc: https://godoc.org/github.com/udhos/acigo/aci
 
-See Also
-========
+# See Also
 
 [Cisco APIC REST API User Guide](http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/1-x/api/rest/b_APIC_RESTful_API_User_Guide.html)
 
