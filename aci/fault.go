@@ -1,10 +1,5 @@
 package aci
 
-import (
-	"bytes"
-	"fmt"
-)
-
 // FaultList retrieves the list of faults in the fabric.
 func (c *Client) FaultList() ([]map[string]interface{}, error) {
 
