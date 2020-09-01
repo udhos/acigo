@@ -321,6 +321,11 @@ func (c *Client) postScan(api string, contentType string, r io.Reader) ([]byte, 
 		return nil, fmt.Errorf("bad api=%s", api)
 	}
 
+	// Reset to first APIC host, if all APIC hosts have been exhausted.
+	if c.host == len(c.Opt.Hosts) {
+		c.host = 0
+	}
+
 	for ; c.host < len(c.Opt.Hosts); c.host++ {
 
 		url := c.getURL(api)
